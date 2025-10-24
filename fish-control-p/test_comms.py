@@ -8,7 +8,7 @@ import time
 sys.path.insert(0, 'support_scripts_py')
 
 from fish_control_comms import Fish_Control_Comms   
-from kinematics import inverse_tail
+from kinematics import inverse_tail, dynamixel_angle_to_position
 
 
 fish_robot = Fish_Control_Comms(
@@ -21,18 +21,32 @@ fish_robot.connect_devices()
 def main():   
     print("Starting Fish Control Comms Test")
 
-    for i in range(5):
-        fish_robot.set_PWM_Angle(90+2*i)
-        print(f"Set PWM Angle to {90+i}")
-        time.sleep(0.5)
+    # for i in range(5):
+    #     fish_robot.set_PWM_Angle(90+2*i)
+    #     print(f"Set PWM Angle to {90+i}")
+    #     time.sleep(0.5)
 
-    input("Press Enter to continue to Dynamixel movement test...")
-    fish_robot.move_dynamixel(inverse_tail((5)))
-    time.sleep(1)
-    fish_robot.move_dynamixel(inverse_tail((0)))
+    print("\n")
+    print("Moving Dynamixel to 0 degrees")
+    value = dynamixel_angle_to_position((0))
+    print("Dynamixel value:", value)
+    fish_robot.move_dynamixel(value)
 
-    print("Finished")
-    fish_robot.disconnect_devices()
+    input("Press Enter to continue...")
+
+    print("\n")
+    print("Moving Dynamixel to 78 degrees")
+    value = dynamixel_angle_to_position((78))
+    print("Dynamixel value:", value)
+    fish_robot.move_dynamixel(value)
+
+    input("Press Enter to continue...")
+
+    print("\n")
+    print("Moving Dynamixel to -78 degrees")
+    value = dynamixel_angle_to_position((-78))
+    print("Dynamixel value:", value)
+    fish_robot.move_dynamixel(value)
     
 if __name__ == "__main__":
     main()

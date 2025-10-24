@@ -1,6 +1,8 @@
 import sys
 import time
 
+import numpy as np
+
 # MAKE SURE TO CLOSE DYNAMIXEL WIZARD AND ARDUINO IDE BEFORE RUNNING THIS TEST
 # END COMUNNICATIONS TO AVOID ISSUES IN RERUNNING THE TEST
 
@@ -8,7 +10,6 @@ import time
 sys.path.insert(0, 'support_scripts_py')
 
 from dynamixel_controller import Dynamixel
-from kinematics import inverse_tail
 
 test_dynamixel = Dynamixel(ID=1, descriptive_device_name="Flag dynamixel", port_name="COM18", baudrate=57600)
 
@@ -18,7 +19,13 @@ test_dynamixel.write_profile_velocity(80)
 test_dynamixel.enable_torque()
 
 
-test_dynamixel.write_position(inverse_tail((2.5)))
+while True:
+    try:
+        theta = float(input("Enter fin deflection (degrees, 'q' to quit): "))
+        test_dynamixel.write_position(theta)
+    except ValueError:
+        print("Exiting...")
+        break
 
 input("Press Enter to end comunication...")
 test_dynamixel.end_communication()

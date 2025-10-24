@@ -1,10 +1,12 @@
 import sys
 import time
+import numpy as np
+import matplotlib.pyplot as plt
 
 # adding Folder_2 to the system path
 sys.path.insert(0, 'support_scripts_py')
 
-from kinematics import fin_to_servo, inverse_tail  
+from kinematics import fin_to_servo, inverse_tail, tail_f 
 
 def main():
     print("=== Kinematics Test ===")
@@ -23,17 +25,18 @@ def main():
     print("Inverse Tail mapping:")
     for phi in test_tails:
         theta = inverse_tail(phi)
-        print(f"  Tail deflection {phi:>5.1f}° → Servo angle {theta:6.2f}°")
+        print(f"  Tail deflection {phi:>5.1f}° → Dynamixel {theta:6.2f}")
     print()
 
-    # Optional: interactive test
-    while True:
-        try:
-            phi = float(input("Enter fin deflection (degrees, 'q' to quit): "))
-            print(f"Servo angle = {fin_to_servo(phi):.2f}°")
-        except ValueError:
-            print("Exiting...")
-            break
+
+    # # Optional: interactive test
+    # while True:
+    #     try:
+    #         phi = float(input("Enter fin deflection (degrees, 'q' to quit): "))
+    #         print(f"Servo angle = {fin_to_servo(phi):.2f}°")
+    #     except ValueError:
+    #         print("Exiting...")
+    #         break
 
 
 if __name__ == "__main__":

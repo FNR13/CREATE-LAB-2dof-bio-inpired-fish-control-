@@ -23,11 +23,11 @@ def tail_f(theta):
     Tail kinematics function 
         f(theta_DYNAMIXEL) --> phi_TAIL
     """
-    return (
+    return(
         5.77e-08    * theta**4
-        - 4.303e-05 * theta**3
-        - 2.631e-05 * theta**2
-        + 1.045     * theta
+        - 4.303e-05 *theta**3
+        - 2.631e-05 *theta**2
+        + 1.045     *theta 
         + 0.2932
     )
 
@@ -59,5 +59,18 @@ def inverse_tail(phi):
             high = mid
 
     return sign * mid
+
+def dynamixel_angle_to_position(angle_deg):
+    """
+    Convert gear angle in degrees to Dynamixel position value.
+    Based on calibration:
+    -90° → 2585
+     0°  → 1600
+    +90° → 570
+    """
+    slope = -(2585-1600)/90
+    offset = 1600
+    val = slope * angle_deg + offset
+    return int(round(val))
 
 

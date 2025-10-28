@@ -1,35 +1,50 @@
+import os
 import sys
 import math
 import time
 
+# ---------------------------------------------------------------------
+# Configuration constants
+# ---------------------------------------------------------------------
+
+MODE = "symmetric_sin"   # "test", "symmetric_sin", or "standby"
+
+# For MODE == "test"
+PHI_TAIL = 15.0  # degrees
+PHI_FIN = 10.0   # degrees
+
+# For MODE == "symmetric_sin"
+AMPLITUDE_TAIL = 20.0    # deg
+AMPLITUDE_FIN = 15.0     # deg
+FREQUENCY = 0.5          # Hz
+PHASE = 0.0              # radians
+
+LOOP_FREQUENCY =100.0      # Hz
+LOOP_DT = 1/LOOP_FREQUENCY       # seconds — stop automatically after this
+
+LOG = True
+LOG_FILENAME = "logs/fish_robot_log.xlsx"
+
+PRINT = False
+
+# ---------------------------------------------------------------------
+
 # Add your support folder to the path
 sys.path.insert(0, 'support_scripts_py')
 
-from kinematics import inverse_tail, dynamixel_angle_to_position, fin_to_servo
+from kinematics import inverse_tail, dynamixel_angle_to_position, dynamixel_position_to_angle, fin_to_servo
+from logger import DataLogger, plot_log
 
+# Create the logger
+logger = DataLogger(LOG_FILENAME)
+
+# Delete previous file if it exists
+if os.path.exists(LOG_FILENAME):
+    os.remove(LOG_FILENAME)
+    print(f"[INFO] Existing log file '{LOG_FILENAME}' deleted.")
+
+# ---------------------------------------------------------------------
 def test_loop():
-    """
-    Test the timing and waveform calculations for tail and fin motions
-    without sending commands to any hardware.
-    """
-
-    # ---------------------------------------------------------------------
-    # Configuration constants
-    # ---------------------------------------------------------------------
-    MODE = "symmetric_sin"   # "test", "symmetric_sin", or "standby"
-
-    # For MODE == "test"
-    PHI_TAIL = 15.0  # degrees
-    PHI_FIN = 10.0   # degrees
-
-    # For MODE == "symmetric_sin"
-    AMPLITUDE_TAIL = 20.0    # deg
-    AMPLITUDE_FIN = 15.0     # deg
-    FREQUENCY = 0.5          # Hz
-    PHASE = 0.0              # radians
-
-    LOOP_DT = 0.05           # seconds (20 Hz update rate)
-    TEST_DURATION = 10.0     # seconds — stop automatically after this
 
     print("[TEST] Starting control loop simulation (no hardware)...")
 
@@ -47,9 +62,6 @@ def test_loop():
 
             # Compute elapsed time since start
             t = time.perf_counter() - t0
-            if t > TEST_DURATION:
-                print("[TEST] Simulation complete.")
-                break
 
             # -----------------------------------------------------------------
             # Compute desired fin/tail deflection
@@ -70,19 +82,32 @@ def test_loop():
             theta_tail = inverse_tail(phi_tail)
             theta_fin = fin_to_servo(phi_fin)
 
-            # Optional calibration override (for MODE == "test")
-            if MODE == "test":
-                theta_tail = phi_tail
-                theta_fin = phi_fin
-
+            dynamixel_angle = 0
             # -----------------------------------------------------------------
-            # Debug print (simulation output)
-            # -----------------------------------------------------------------
-            print(f"[t={t:6.2f}s] Tail: {phi_tail:+6.2f}° → {theta_tail:+6.2f}°,  "
-                f"Fin: {phi_fin:+6.2f}° → {theta_fin:+6.2f}°")
+            # Save data
 
+            if MODE=="test":
+                break
+        
+            if PRINT:
+                print(f"[t={t:6.2f}s] Tail: {phi_tail:+6.2f}° → {theta_tail:+6.2f}°,  "
+                    f"Fin: {phi_fin:+6.2f}° → {theta_fin:+6.2f}°")
+
+            if LOG:
+                logger.log(
+                            t,
+                            phi_tail, theta_tail, dynamixel_angle,
+                            phi_fin, theta_fin
+                        )
+                
     except KeyboardInterrupt:
         print("\n[TEST] Simulation interrupted by user.")
+
+        if LOG:
+            logger.save()
+            print("[STOP] Log saved.")
+
+            plot_log(LOG_FILENAME)
 
 if __name__ == "__main__":
     test_loop()

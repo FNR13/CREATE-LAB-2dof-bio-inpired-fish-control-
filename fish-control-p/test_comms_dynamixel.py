@@ -3,8 +3,10 @@ import time
 
 import numpy as np
 
-# MAKE SURE TO CLOSE DYNAMIXEL WIZARD AND ARDUINO IDE BEFORE RUNNING THIS TEST
-# END COMUNNICATIONS TO AVOID ISSUES IN RERUNNING THE TEST
+# ---------------------------------------------------------------------
+# MAKE SURE TO CLOSE ARDUINO IDE AND DYNAMIXEL WIZARD (or disconnect) BEFORE RUNNING THIS TEST
+# END COMUNNICATIONS IN THE END TO AVOID ISSUES IN RERUNNING THE TEST
+# ---------------------------------------------------------------------
 
 # adding Folder_2 to the system path
 sys.path.insert(0, 'support_scripts_py')
@@ -21,7 +23,7 @@ test_dynamixel.enable_torque()
 
 while True:
     try:
-        theta = float(input("Enter fin deflection (degrees, 'q' to quit): "))
+        theta = float(input("Enter ynamixel position ('q' to quit): "))
         test_dynamixel.write_position(theta)
     except ValueError:
         print("Exiting...")

@@ -43,6 +43,5 @@ void loop() {
   }
 
   sync();
-  delay(1000);
 }
 

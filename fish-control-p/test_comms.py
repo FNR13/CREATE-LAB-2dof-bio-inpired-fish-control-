@@ -1,8 +1,10 @@
 import sys
 import time
 
-# MAKE SURE TO CLOSE DYNAMIXEL WIZARD AND ARDUINO IDE BEFORE RUNNING THIS TEST
-# END COMUNNICATIONS TO AVOID ISSUES IN RERUNNING THE TEST
+# ---------------------------------------------------------------------
+# MAKE SURE TO CLOSE ARDUINO IDE AND DYNAMIXEL WIZARD (or disconnect) BEFORE RUNNING THIS TEST
+# END COMUNNICATIONS IN THE END TO AVOID ISSUES IN RERUNNING THE TEST
+# ---------------------------------------------------------------------
 
 # adding Folder_2 to the system path
 sys.path.insert(0, 'support_scripts_py')
@@ -21,32 +23,32 @@ fish_robot.connect_devices()
 def main():   
     print("Starting Fish Control Comms Test")
 
-    # for i in range(5):
-    #     fish_robot.set_PWM_Angle(90+2*i)
-    #     print(f"Set PWM Angle to {90+i}")
-    #     time.sleep(0.5)
+    for i in range(5):
+        fish_robot.set_PWM_Angle(90+2*i)
+        print(f"Set PWM Angle to {90+i}")
+        time.sleep(0.5)
 
-    print("\n")
-    print("Moving Dynamixel to 0 degrees")
-    value = dynamixel_angle_to_position((0))
-    print("Dynamixel value:", value)
-    fish_robot.move_dynamixel(value)
+    # print("\n")
+    # print("Moving Dynamixel to 0 degrees")
+    # value = dynamixel_angle_to_position((0))
+    # print("Dynamixel value:", value)
+    # fish_robot.move_dynamixel(value)
 
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
-    print("\n")
-    print("Moving Dynamixel to 78 degrees")
-    value = dynamixel_angle_to_position((78))
-    print("Dynamixel value:", value)
-    fish_robot.move_dynamixel(value)
+    # print("\n")
+    # print("Moving Dynamixel to 78 degrees")
+    # value = dynamixel_angle_to_position((78))
+    # print("Dynamixel value:", value)
+    # fish_robot.move_dynamixel(value)
 
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
-    print("\n")
-    print("Moving Dynamixel to -78 degrees")
-    value = dynamixel_angle_to_position((-78))
-    print("Dynamixel value:", value)
-    fish_robot.move_dynamixel(value)
+    # print("\n")
+    # print("Moving Dynamixel to -78 degrees")
+    # value = dynamixel_angle_to_position((-78))
+    # print("Dynamixel value:", value)
+    # fish_robot.move_dynamixel(value)
     
 if __name__ == "__main__":
     main()

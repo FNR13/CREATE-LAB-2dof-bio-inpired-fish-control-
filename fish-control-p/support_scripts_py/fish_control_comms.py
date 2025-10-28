@@ -23,6 +23,9 @@ class Fish_Control_Comms():
     def move_dynamixel(self, position):
         self.dynamixel.write_position(position)
 
+    def get_dynamixel_position(self):
+        return self.dynamixel.read_position()
+    
     def disconnect_devices(self):
         self.dynamixel.end_communication()
 

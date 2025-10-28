@@ -64,13 +64,24 @@ def dynamixel_angle_to_position(angle_deg):
     """
     Convert gear angle in degrees to Dynamixel position value.
     Based on calibration:
-    -90° → 2585
+    -90° → 2630
      0°  → 1600
     +90° → 570
     """
-    slope = -(2585-1600)/90
+    slope = -(1600-570)/90
     offset = 1600
     val = slope * angle_deg + offset
     return int(round(val))
 
-
+def dynamixel_position_to_angle(angle_pos):
+    """
+    Convert position to Dynamixel angle in degrees.
+    Based on calibration:
+    -90° → 2630
+     0°  → 1600
+    +90° → 570
+    """
+    slope = -90/(1600-570)
+    offset = 1600
+    val = slope * (angle_pos - offset)
+    return int(round(val))

@@ -1,6 +1,7 @@
 name: fish_control2
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - aom=3.6.0=hd77b12b_0
   - blas=1.0=mkl
@@ -11,6 +12,7 @@ dependencies:
   - contourpy=1.3.1=py313h214f63a_0
   - cycler=0.11.0=pyhd3eb1b0_0
   - dav1d=1.2.1=h2bbff1b_0
+  - et_xmlfile=2.0.0=py313haa95532_0
   - expat=2.7.1=h8ddb27b_0
   - fontconfig=2.15.0=hd211d86_0
   - fonttools=4.60.1=py313h02ab6af_0
@@ -49,6 +51,7 @@ dependencies:
   - numpy=2.3.3=py313h050da96_0
   - numpy-base=2.3.3=py313h1e017a8_0
   - openjpeg=2.5.2=h9b5d1b5_1
+  - openpyxl=3.1.5=py313hc624790_2
   - openssl=3.0.18=h543e019_0
   - packaging=25.0=py313haa95532_0
   - pandas=2.3.3=py313h42c1672_0
@@ -91,3 +94,4 @@ dependencies:
       - pynput==1.8.1
       - pyserial==3.5
       - setuptools==80.9.0
+prefix: C:\Users\ricar\anaconda3\envs\fish_control2

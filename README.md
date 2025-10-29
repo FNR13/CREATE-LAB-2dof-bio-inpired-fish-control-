@@ -34,7 +34,7 @@ Support modules in `support_scripts_py`:
 
 1. Create a conda environment with th e provided `.yml`:
 ```sh
-conda env create --name envname --file=fish_control2.yml
+conda env create --name envname --file=environment.yaml
 conda activate envname
 ```
 

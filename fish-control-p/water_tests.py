@@ -15,16 +15,16 @@ import time
 MODE = "symmetric_sin"   # options: "test", "symmetric_sin", "standby"
 
 # For MODE == "test"
-PHI_TAIL = -0  # degrees
+PHI_TAIL = 0  # degrees
 PHI_FIN = 0 # degrees
 
 # For MODE == "symmetric_sin"
-AMPLITUDE_TAIL = 40.0    # deg
-AMPLITUDE_FIN = 0     # deg
-FREQUENCY = 1.25      # Hz
-PHASE = -50*math.pi/180   # radians
+AMPLITUDE_TAIL = 45    # deg
+AMPLITUDE_FIN = 20  # deg
+FREQUENCY = 0.50   # Hz
+PHASE = 90*math.pi/180   # radians
 
-LOOP_FREQUENCY =100.0      # Hz
+LOOP_FREQUENCY =200.0      # Hz
 LOOP_DT = 1/LOOP_FREQUENCY     
 
 LOG = False
@@ -39,26 +39,27 @@ sys.path.insert(0, 'support_scripts_py')
 
 from fish_control_comms import Fish_Control_Comms
 from kinematics import inverse_tail, dynamixel_angle_to_position, dynamixel_position_to_angle, fin_to_servo
-from fish_logger import DataLogger, plot_log
+from logger import DataLogger, plot_log
 
 # ---------------------------------------------------------------------
 # Initialize communication interface
 # ---------------------------------------------------------------------
 fish_robot = Fish_Control_Comms(
-    arduino_port="COM17", arduino_baudrate=115200, 
+    arduino_port="COM22", arduino_baudrate=115200, 
     dynamixel_port="COM18", dynamixel_baudrate=57600, dynamixel_ID=1, dynamixel_velocity=310
 )
 
 fish_robot.connect_devices()
 print("[INFO] Fish control communication initialized")
 
-# Create the logger
-logger = DataLogger(LOG_FILENAME)
+if LOG:
+    # Create the logger
+    logger = DataLogger(LOG_FILENAME)
 
-# Delete previous file if it exists
-if os.path.exists(LOG_FILENAME):
-    os.remove(LOG_FILENAME)
-    print(f"[INFO] Existing log file '{LOG_FILENAME}' deleted.")
+    # Delete previous file if it exists
+    if os.path.exists(LOG_FILENAME):
+        os.remove(LOG_FILENAME)
+        print(f"[INFO] Existing log file '{LOG_FILENAME}' deleted.")
 
 # ---------------------------------------------------------------------
 
@@ -67,7 +68,7 @@ def main():
     # Initial positions
     fish_robot.move_dynamixel(dynamixel_angle_to_position(0))
     fish_robot.set_PWM_Angle(fin_to_servo(0))
-    time.sleep(1.0)
+    time.sleep(3.0)
 
     t0 = time.perf_counter()
     next_time = t0
@@ -102,7 +103,6 @@ def main():
             # -----------------------------------------------------------------
             theta_tail = inverse_tail(phi_tail)
             theta_fin = fin_to_servo(phi_fin)
-
             # -----------------------------------------------------------------
             # Send commands to hardware via comms interface
             # -----------------------------------------------------------------
@@ -138,7 +138,8 @@ def main():
         fish_robot.set_PWM_Angle(theta_fin)
 
         print("[STOP] All actuators set to 0°.")
-    
+        time.sleep(1.0)
+
         if LOG:
             logger.save()
             print("[STOP] Log saved.")

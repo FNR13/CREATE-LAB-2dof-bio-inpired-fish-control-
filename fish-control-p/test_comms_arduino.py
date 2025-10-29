@@ -23,7 +23,7 @@ mode = "sweep"
 
 if mode == "sweep":
     arduino_test.send_message("mode:sweep")
-    delay = 0.02
+    delay = 0.020
     for i in range(30):
         arduino_test.send_message(f"pwm:{90+ i}")
         time.sleep(delay)

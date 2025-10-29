@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 def fin_to_servo(phi):
     """
@@ -13,7 +14,8 @@ def fin_to_servo(phi):
 
     theta = phi / k + 90.0            # servo neutral at 90°
 
-    theta = max(0.0, min(theta, 180.0))  # clamp between 0 and 180°
+    # theta = max(0.0, min(theta, 180.0))  # clamp between 0 and 180°
+    theta = np.clip(theta, 0.0, 180.0) 
 
     return theta
 

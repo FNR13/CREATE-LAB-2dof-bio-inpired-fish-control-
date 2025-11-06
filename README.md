@@ -46,3 +46,7 @@ conda activate envname
    - Arduino (115200 baud)
    - Dynamixel (57600 baud)
 
+2. Upload `flag_arduino` to arduino
+
+3. Run python code
+

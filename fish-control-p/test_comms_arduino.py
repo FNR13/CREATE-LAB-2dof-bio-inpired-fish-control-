@@ -18,7 +18,7 @@ arduino_test.connect_and_handshake()
 time.sleep(2)  # wait for connection to establish
 
 mode = "input"
-mode = "sweep"
+# mode = "sweep"
 
 
 if mode == "sweep":
@@ -41,7 +41,7 @@ if mode == "input":
     while True:
         try:
             theta = float(input("Enter servo position ('q' to quit): "))
-            arduino_test.send_message(f"pwm:{70}")
+            arduino_test.send_message(f"pwm:{theta}")
         except ValueError:
             print("Exiting...")
             break

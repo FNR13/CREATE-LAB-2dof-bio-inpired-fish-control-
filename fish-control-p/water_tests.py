@@ -68,7 +68,7 @@ def main():
     # Initial positions
     fish_robot.move_dynamixel(dynamixel_angle_to_position(0))
     fish_robot.set_PWM_Angle(fin_to_servo(0))
-    time.sleep(3.0)
+    time.sleep(0.5)
 
     t0 = time.perf_counter()
     next_time = t0
@@ -138,7 +138,7 @@ def main():
         fish_robot.set_PWM_Angle(theta_fin)
 
         print("[STOP] All actuators set to 0°.")
-        time.sleep(1.0)
+        time.sleep(0.5)
 
         if LOG:
             logger.save()

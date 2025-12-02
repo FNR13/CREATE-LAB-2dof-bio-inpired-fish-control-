@@ -1,5 +1,5 @@
-# AUTHOR : Ricardo Francisco & Alessandro Minghelli
-# MASTER PROJECT : BIOMIMETIC FISH OSCILLATORY Control
+# AUTHOR : Ricardo Francisco 
+# SEMESTER PROJECT : BIOMIMETIC FISH OSCILLATORY Control
 
 # 🐟 Fish Robot Controller
 

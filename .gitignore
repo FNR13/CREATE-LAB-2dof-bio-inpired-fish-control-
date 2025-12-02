@@ -1,6 +1,8 @@
 .vscode/
-Old Python Code/
+
 __pycache__/
-UR5/
-debug_arduino/
+
 logs/
+
+debug_arduino/
+

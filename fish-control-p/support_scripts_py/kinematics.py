@@ -19,7 +19,6 @@ C0 = 0.2932        # constant term
 DYNAMIXEL_90_VALUE = 570
 DYNAMIXEL_0_VALUE = 1600
 # ============================
-
 import math
 import numpy as np
 

@@ -1,5 +1,3 @@
-# fish_logger/logger.py
-import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from openpyxl import load_workbook

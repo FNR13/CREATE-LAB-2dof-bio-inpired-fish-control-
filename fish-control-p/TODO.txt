@@ -1,0 +1,7 @@
+- Calibrate Pool Camera correctly
+- Set up camera in Pool
+- Set up markers in pool
+- Test all vision system - pos then speed
+- Debug fish dynamixel
+- Get fish moving
+- System wide test

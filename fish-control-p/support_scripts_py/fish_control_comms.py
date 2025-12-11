@@ -1,5 +1,9 @@
-from dynamixel_controller import Dynamixel
-from comms_wrapper import Arduino
+try:
+    from .dynamixel_controller import Dynamixel
+    from .comms_wrapper import Arduino
+except:
+    from dynamixel_controller import Dynamixel
+    from comms_wrapper import Arduino
 
 class Fish_Control_Comms():
     def __init__(self, arduino_port, arduino_baudrate, dynamixel_port, dynamixel_baudrate, dynamixel_ID, dynamixel_velocity) -> None:

@@ -1,6 +1,10 @@
 import sys
 from dynamixel_sdk import * 
-from dynamixel_address_book import *
+
+try:
+    from .dynamixel_address_book import *
+except:
+    from dynamixel_address_book import *
 
 class Dynamixel:
     def __init__(self, ID, descriptive_device_name, port_name, baudrate, series_name = "xm"):

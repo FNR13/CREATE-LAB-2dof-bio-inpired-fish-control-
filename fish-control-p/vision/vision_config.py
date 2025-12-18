@@ -8,8 +8,7 @@ SUPPORT_DIR = os.path.join(SCRIPT_DIR, "vision_supp")
 
 
 CALIBRATION = {
-    "filename": "camera_calib.npz",
-    "path": os.path.join(SUPPORT_DIR, "camera_calib.npz")
+    "path": os.path.join(SUPPORT_DIR, "camera calibration data", "camera_calib_1_5.npz")
 }
 
 
@@ -17,15 +16,13 @@ MARKERS = {
     "dictionary": cv2.aruco.DICT_APRILTAG_36h11,
     "parameters": cv2.aruco.DetectorParameters(),
 
-    "known_ids": [1, 4, 3],
-    "target_ids": [0, 2],
+    "known_ids": [4, 3, 1],
     # "known_ids": [0, 1, 2],
-    # "target_ids": [3, 4],
 
     "positions_3D": np.array([
-        [0.00, 0.00, 0.00],   # ID 0
-        [2.00, 0.00, 0.00],   # ID 1
-        [2.00, 1.00, 0.00],   # ID 2
+        [0.00, 0.00, 0.00],   # ID 4
+        [0.00, 1.75, 0.00],   # ID 3
+        [2.75, 0.00, 0.00],   # ID 1
     ], dtype=np.float32)
 }
 
@@ -34,6 +31,7 @@ YOLO_CFG = {
     "model_name": "yolo11s.pt",
     "model_path": os.path.join(SUPPORT_DIR, "YOLO_MODELS", "yolo11s.pt"),
     "confidence": 0.25,
+    "target"    : "airplane" 
 }
 
 

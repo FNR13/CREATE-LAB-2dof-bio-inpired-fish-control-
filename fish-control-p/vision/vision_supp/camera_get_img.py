@@ -16,6 +16,8 @@ CAMERA_INDEX = 0
 
 cap = open_camera(CAMERA_INDEX)
 print(f"Camera {CAMERA_INDEX} opened successfully.")
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 # --- Live camera feed loop ---
 while True:
@@ -32,7 +34,7 @@ while True:
 
 # --- Save the last captured frame ---
 img_path = os.path.join(script_dir, "imgs", "photo.jpg")
-cv2.imwrite(img_path, frame)
+# cv2.imwrite(img_path, frame)
 print("Saved photo.jpg")
 
 # --- Cleanup ---

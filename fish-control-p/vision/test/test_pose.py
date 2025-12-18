@@ -17,7 +17,12 @@ from vision_config import MARKERS
 CAMERA_INDEX = 0
 USE_CAMERA = False
 IMG_NAME = "pool_test.jpg"
-# -------------------------------
+
+ground_truth = {
+    0: (0.37, 0.80),
+    2: (1.35, 0.70)
+}
+# -------------------------------  0.37 0.80 ;1.35 0.70;  
 
 # --- Load test image or webcam ---
 if not USE_CAMERA:
@@ -30,6 +35,9 @@ if not USE_CAMERA:
 else:
     print("📹 Using webcam...")
     cap = open_camera(CAMERA_INDEX)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
     ret, img = cap.read()
     cap.release()
     if not ret:
@@ -54,15 +62,28 @@ corners, ids, _ = cv2.aruco.detectMarkers(gray, aruco_dict, parameters=MARKERS["
 
 if ids is not None:
     ids = ids.flatten()
-    for marker_id in MARKERS["target_ids"]:
-        if marker_id not in ids:
-            print(f"⚠ Target marker {marker_id} not detected.")
+
+    for i, marker_id in enumerate(ids):
+        # Only use markers that are in ground truth (target IDs)
+        if marker_id not in ground_truth:
             continue
-        idx = np.where(ids == marker_id)[0][0]
-        center = corners[idx][0].mean(axis=0)
+
+        center = corners[i][0].mean(axis=0)
         u, v = center
-        Xw, Yw = fv.get_real_world_position(u, v)
-        print(f"Marker {marker_id} pixel=({u:.1f}, {v:.1f}) → world=({Xw:.4f}, {Yw:.4f})")
+
+        Xw_est, Yw_est = fv.get_real_world_position(u, v)
+        Xw_gt, Yw_gt = ground_truth[marker_id]
+
+        print(
+            f"Marker {marker_id} "
+            f"pixel=({u:.1f}, {v:.1f}) → "
+            f"est=({Xw_est:.4f}, {Yw_est:.4f}) | "
+            f"GT=({Xw_gt:.2f}, {Yw_gt:.2f})"
+        )
+else:
+    print("⚠ No markers detected.")
+
+
 
 # --- Show results ---
 

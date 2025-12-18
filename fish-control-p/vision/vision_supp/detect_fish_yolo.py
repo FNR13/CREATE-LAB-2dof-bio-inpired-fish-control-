@@ -10,7 +10,7 @@ from ultralytics import YOLO
 # -------------------------------
 CAMERA_INDEX = 0
 USE_CAMERA = False
-IMG_NAME = "fish.png"
+IMG_NAME = "pool_fish.png"
 MODEL_NAME = "yolo11s.pt" # 
 # -------------------------------
 
@@ -39,5 +39,6 @@ else:
     results = model.predict(source=img)
 
     for r in results:
+        print(r)
         r.show()
     

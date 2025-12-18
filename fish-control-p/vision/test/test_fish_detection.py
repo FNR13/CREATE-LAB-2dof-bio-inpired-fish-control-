@@ -15,7 +15,7 @@ from vision import Fish_Vision
 # -------------------------------
 CAMERA_INDEX = 0
 USE_CAMERA = False
-IMG_NAME = "fish.png"  
+IMG_NAME = "pool_fish.png"  
 SHOW_OUTPUT = True
 # -------------------------------
 
@@ -30,6 +30,9 @@ if not USE_CAMERA:
 else:
     print("📹 Using webcam...")
     cap = open_camera(CAMERA_INDEX)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    
     ret, img = cap.read()
     cap.release()
     if not ret:

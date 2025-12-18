@@ -12,7 +12,7 @@ from vision_helpers import open_camera
 # Parameters
 # -------------------------------
 CAMERA_INDEX = 0
-USE_CAMERA = False
+USE_CAMERA = True
 IMG_NAME = "pool_test.jpg"
 
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_36h11)

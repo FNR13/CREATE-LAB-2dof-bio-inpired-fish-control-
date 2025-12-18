@@ -32,13 +32,17 @@ class Fish_Vision:
 
         self.model = YOLO(YOLO_CFG["model_path"])
         self.yolo_conf = YOLO_CFG["confidence"]
-
+        self.yolo_target_id = None
+        for k, v in self.model.names.items():
+            if v == YOLO_CFG["target"]:
+                self.yolo_target_id = k
+                break
+            
         # Pose estimation parameters
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(MARKERS["dictionary"])
         self.aruco_params = MARKERS["parameters"]
 
         self.known_markers = MARKERS["known_ids"]
-        self.target_markers = MARKERS["target_ids"]
         self.marker_positions_3D = MARKERS["positions_3D"]
 
         self.rvec = None
@@ -209,12 +213,20 @@ class Fish_Vision:
         results = self.model.predict(img, conf=self.yolo_conf, verbose=False)
         detections = results[0].boxes
 
-        if len(detections) == 0:
+        mask = detections.cls.cpu().numpy() == self.yolo_target_id
+        filtered_dets = detections[mask]
+
+        if len(filtered_dets) == 0:
             print("YOLO: No fish detected.")
             return None, None, None
 
-        # Take the highest confidence detection
-        box = detections[0].xyxy[0].cpu().numpy()
+        # Pick highest confidence detection
+        confs = filtered_dets.conf.cpu().numpy()
+        best_idx = np.argmax(confs)
+        best_det = filtered_dets[best_idx]
+
+        # Extract bounding box
+        box = best_det.xyxy[0].cpu().numpy()
         x1, y1, x2, y2 = map(int, box)
 
         crop = img[y1:y2, x1:x2]
@@ -226,6 +238,7 @@ class Fish_Vision:
         u_local, v_local, angle = self.detect_fish(crop, show_output=False)
 
         if u_local is None:
+            print("Contours: No fish detected.")
             return None, None, None
 
         # Convert local centroid → full image coordinates

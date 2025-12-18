@@ -14,7 +14,7 @@ from vision_helpers import open_camera
 # -------------------------------
 CAMERA_INDEX = 0
 CHESSBOARD_SIZE = (8, 5)   # (cols, rows)
-SQUARE_SIZE_M   = 0.020    # in meters
+SQUARE_SIZE_M   = 0.043   # in meters
 COOLDOWN_TIMER  = 30       # Frames to wait between capture
 OUTPUT_FILE     = "camera_calib.npz"
 # -------------------------------

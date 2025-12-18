@@ -21,6 +21,8 @@ def open_camera(index=0):
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open camera {index} on {system}")
 
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     return cap
 
 def getCenters(corners, ids):

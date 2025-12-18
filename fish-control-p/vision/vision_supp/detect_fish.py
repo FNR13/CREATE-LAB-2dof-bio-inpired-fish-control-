@@ -8,8 +8,8 @@ import numpy as np
 # -------------------------------
 # Parameters
 # -------------------------------
-IMG_NAME = "fish.png"
-SHOW_THRESHOLDS = False
+IMG_NAME = "pool_fish.png"
+SHOW_THRESHOLDS = True
 SHOW_CONTOURS = True
 
 # Algorithm tuning

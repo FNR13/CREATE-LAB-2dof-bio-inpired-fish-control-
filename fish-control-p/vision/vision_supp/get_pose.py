@@ -22,13 +22,18 @@ aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_36h11)
 parameters = cv2.aruco.DetectorParameters()
 
 if IMG_NAME == "pool_test.jpg":
-    KNOWN_MARKERS = [1, 4, 3]
+    KNOWN_MARKERS = [4, 3, 1]
     MARKER_POSTIONS_3D = np.array([
-        [0.00, 0.00, 0.00],   # ID 1
-        [2.00, 0.00, 0.00],   # ID 4
-        [2.00, 1.00, 0.00],   # ID 3
+        [0.00, 0.00, 0.00],   # ID 4
+        [0.00, 1.75, 0.00],   # ID 3
+        [2.75, 0.00, 0.00],   # ID 1
     ], dtype=np.float32)
     TARGET_MARKERS = [0, 2]
+    GROUND_TRUTH = {
+        0: (0.37, 0.80),
+        2: (1.35, 0.70)
+    }
+
 else:
     KNOWN_MARKERS = [0, 1, 2]
     MARKER_POSTIONS_3D = np.array([
@@ -66,7 +71,7 @@ else:
     img = frame
 
 # --- Load camera calibration ---
-calib_path = os.path.join(script_dir, "camera_calib.npz")
+calib_path = os.path.join(script_dir, "camera calibration data", "camera_calib_1_5.npz")
 calib_data = np.load(calib_path)
 camera_matrix = calib_data["camera_matrix"]
 dist_coeffs = calib_data["dist_coeffs"]
@@ -112,20 +117,47 @@ else:
         img = drawAxes(img, sorted_centers[first_index], imgpts)
         R, _ = cv2.Rodrigues(rvec)
 
-        for marker_id in TARGET_MARKERS:
-            idx = np.where(sorted_ids == marker_id)[0][0]
-            u, v = sorted_centers[idx]
-            print(f"Marker {marker_id} image coordinates (pixels): [{u}, {v}]")
+    for marker_id in TARGET_MARKERS:
+        if marker_id not in sorted_ids:
+            print(f"⚠ Target marker {marker_id} not detected.")
+            continue
 
-            uv_h = np.array([u, v, 1.0], dtype=np.float32).reshape(3, 1)
-            ray_cam = np.linalg.inv(camera_matrix) @ uv_h
-            Rcw = R.T
-            tcw = -R.T @ tvec
-            ray_world = Rcw @ ray_cam
-            s = -tcw[2, 0] / ray_world[2, 0]
-            Pw = tcw + s * ray_world
-            print(f"Marker {marker_id} position in WORLD frame (Z=0 plane): "
-                  f"[{Pw[0,0]:.6f}, {Pw[1,0]:.6f}, {Pw[2,0]:.6f}]")
+        if marker_id not in GROUND_TRUTH:
+            print(f"⚠ No ground truth for marker {marker_id}.")
+            continue
+
+        idx = np.where(sorted_ids == marker_id)[0][0]
+        u, v = sorted_centers[idx]
+
+        # --- Image coordinates ---
+        print(f"Marker {marker_id} image coordinates (pixels): [{u:.1f}, {v:.1f}]")
+
+        # --- Back-project to world (Z=0 plane) ---
+        uv_h = np.array([u, v, 1.0], dtype=np.float32).reshape(3, 1)
+        ray_cam = np.linalg.inv(camera_matrix) @ uv_h
+
+        Rcw = R.T
+        tcw = -R.T @ tvec
+        ray_world = Rcw @ ray_cam
+
+        s = -tcw[2, 0] / ray_world[2, 0]
+        Pw = tcw + s * ray_world
+
+        Xw_est, Yw_est = Pw[0, 0], Pw[1, 0]
+        Xw_gt, Yw_gt = GROUND_TRUTH[marker_id]
+
+        # --- Error ---
+        dx = Xw_est - Xw_gt
+        dy = Yw_est - Yw_gt
+        err = np.sqrt(dx**2 + dy**2)
+
+        print(
+            f"Marker {marker_id} → "
+            f"EST=({Xw_est:.4f}, {Yw_est:.4f}) | "
+            f"GT=({Xw_gt:.2f}, {Yw_gt:.2f}) | "
+            f"ERR={err:.4f} m"
+        )
+
 
     # --- Draw markers ---
     for i, marker_id in enumerate(ids.flatten()):

@@ -7,6 +7,8 @@ sys.path.insert(0, parent_dir)
 
 import cv2
 import numpy as np
+import time
+
 from vision_helpers import open_camera
 from vision import Fish_Vision  
 
@@ -14,8 +16,8 @@ from vision import Fish_Vision
 # Parameters
 # -------------------------------
 CAMERA_INDEX = 0
-USE_CAMERA = False
-IMG_NAME = "pool_fish.png"  
+USE_CAMERA = True
+IMG_NAME = "photo1.jpg"  
 SHOW_OUTPUT = True
 # -------------------------------
 
@@ -32,8 +34,9 @@ else:
     cap = open_camera(CAMERA_INDEX)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    
-    ret, img = cap.read()
+
+    for i in range(25):
+        ret, img = cap.read()
     cap.release()
     if not ret:
         print("❌ Failed to read from webcam")
@@ -42,9 +45,12 @@ else:
 fv = Fish_Vision(camera_index=0)
 print("🔧 Vision class initialized.")
 
+fv.calibrated = True
+fv.pool_pixels = [(181, 53), (1099, 659)]
 
 # --- Test detect_fish() - full frame ---
 print("\n--- Testing detect_fish() ---")
+
 u1, v1, ang1 = fv.detect_fish(img.copy(), show_output=SHOW_OUTPUT)
 
 if u1 is None:

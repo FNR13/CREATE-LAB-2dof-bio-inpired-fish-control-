@@ -12,17 +12,20 @@ CALIBRATION = {
 }
 
 
+POOL_WIDTH_M = 2.75
+POOL_HEIGHT_M = 1.75
+
 MARKERS = {
     "dictionary": cv2.aruco.DICT_APRILTAG_36h11,
     "parameters": cv2.aruco.DetectorParameters(),
 
-    "known_ids": [4, 3, 1],
-    # "known_ids": [0, 1, 2],
+    "known_ids": [0, 1, 2],
 
+    # this depends on how you setup the markers, this is aligned for a normal xy plane with camera view (which is y-inverted to camera axis)
     "positions_3D": np.array([
-        [0.00, 0.00, 0.00],   # ID 4
-        [0.00, 1.75, 0.00],   # ID 3
-        [2.75, 0.00, 0.00],   # ID 1
+        [0.00, 0.00, 0.00],          # ID 0
+        [0.00, POOL_HEIGHT_M, 0.00], # ID 1
+        [POOL_WIDTH_M, 0.00, 0.00],  # ID 2
     ], dtype=np.float32)
 }
 
@@ -47,7 +50,13 @@ FISH_DETECTION = {
     },
 
     "contours": {
-        "min_area": 500,
+        "min_area": 1000,
         "max_area": 50000
     }
 }
+
+DRAWING = {
+        "axis_length_pixels": 50,
+        "axis_length_meters": 0.50,
+}
+

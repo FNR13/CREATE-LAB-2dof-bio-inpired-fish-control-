@@ -8,7 +8,7 @@ import numpy as np
 # -------------------------------
 # Parameters
 # -------------------------------
-IMG_NAME = "pool_fish.png"
+IMG_NAME = "fish.png"
 SHOW_THRESHOLDS = True
 SHOW_CONTOURS = True
 
@@ -66,8 +66,8 @@ cv2.circle(img, (int(u), int(v)), 6, (0, 0, 255), -1)
 
 # --- Draw orientation axis ---
 length = 150
-x2 = int(u + length * eigenvectors[0,0])
-y2 = int(v + length * eigenvectors[0,1])
+x2 = int(u + length * -eigenvectors[0,0])
+y2 = int(v + length * -eigenvectors[0,1])
 cv2.line(img, (int(u), int(v)), (x2, y2), (255, 0, 0), 3)
 
 # --- Show results ---

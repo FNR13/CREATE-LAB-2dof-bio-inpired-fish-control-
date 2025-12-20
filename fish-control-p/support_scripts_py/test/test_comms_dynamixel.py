@@ -17,7 +17,7 @@ from dynamixel_controller import Dynamixel
 test_dynamixel = Dynamixel(
     ID=1,
     descriptive_device_name="Flag dynamixel",
-    port_name="COM18",
+    port_name="COM19",
     baudrate=57600
 )
 

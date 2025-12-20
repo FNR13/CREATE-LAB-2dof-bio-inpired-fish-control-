@@ -16,12 +16,13 @@ from vision_config import MARKERS
 # -------------------------------
 CAMERA_INDEX = 0
 USE_CAMERA = False
-IMG_NAME = "pool_test.jpg"
+IMG_NAME =  "photo1.jpg" # "pool_test.jpg"
 
-ground_truth = {
-    0: (0.37, 0.80),
-    2: (1.35, 0.70)
-}
+if not USE_CAMERA:
+    ground_truth = {
+        0: (0.37, 0.80),
+        2: (1.35, 0.70)
+    }
 # -------------------------------  0.37 0.80 ;1.35 0.70;  
 
 # --- Load test image or webcam ---
@@ -39,7 +40,6 @@ else:
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     ret, img = cap.read()
-    cap.release()
     if not ret:
         print("❌ Failed to read from webcam")
         exit()
@@ -48,11 +48,30 @@ fv = Fish_Vision(camera_index=0)
 
 # --- Calibration ---
 print("\n--- Calibration ---")
-ok = fv.calibrate(img, show_output=True)
+MAX_ATTEMPTS = 5
+for attempt in range(1, MAX_ATTEMPTS + 1):
+    if USE_CAMERA:
+        ret, img = cap.read()  # grab a new frame from the camera
+        if not ret:
+            print(f"⚠️ Attempt {attempt}: Failed to grab frame from camera.")
+            continue
+
+    ok = fv.calibrate(img, show_output=True)
+    print(ok)
+    if ok:
+        print(f"✅ Calibration succeeded on attempt {attempt}.")
+        break
+    else:
+        print(f"⚠️ Attempt {attempt}: Calibration failed, retrying...")
+
 if not ok:
-    print("❌ Calibration failed — cannot continue.")
+    print("❌ Calibration failed after maximum attempts.")
     exit()
+
 print("✅ Calibration successful!")
+
+if USE_CAMERA:
+    cap.release()
 
 # --- Marker world coordinates ---
 print("\n--- Marker World Coordinates ---")
@@ -65,21 +84,22 @@ if ids is not None:
 
     for i, marker_id in enumerate(ids):
         # Only use markers that are in ground truth (target IDs)
-        if marker_id not in ground_truth:
-            continue
+        if not USE_CAMERA:
+            if marker_id not in ground_truth:
+                continue
 
-        center = corners[i][0].mean(axis=0)
-        u, v = center
+            center = corners[i][0].mean(axis=0)
+            u, v = center
 
-        Xw_est, Yw_est = fv.get_real_world_position(u, v)
-        Xw_gt, Yw_gt = ground_truth[marker_id]
+            Xw_est, Yw_est = fv.project_pixel_to_world(u, v)
+            Xw_gt, Yw_gt = ground_truth[marker_id]
 
-        print(
-            f"Marker {marker_id} "
-            f"pixel=({u:.1f}, {v:.1f}) → "
-            f"est=({Xw_est:.4f}, {Yw_est:.4f}) | "
-            f"GT=({Xw_gt:.2f}, {Yw_gt:.2f})"
-        )
+            print(
+                f"Marker {marker_id} "
+                f"pixel=({u:.1f}, {v:.1f}) → "
+                f"est=({Xw_est:.4f}, {Yw_est:.4f}) | "
+                f"GT=({Xw_gt:.2f}, {Yw_gt:.2f})"
+            )
 else:
     print("⚠ No markers detected.")
 

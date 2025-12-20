@@ -12,6 +12,7 @@ from vision_helpers import open_camera
 # Parameters
 # -------------------------------
 CAMERA_INDEX = 0
+SAVE_LAST_FRAME = True
 # -------------------------------
 
 cap = open_camera(CAMERA_INDEX)
@@ -33,9 +34,10 @@ while True:
         break
 
 # --- Save the last captured frame ---
-img_path = os.path.join(script_dir, "imgs", "photo.jpg")
-# cv2.imwrite(img_path, frame)
-print("Saved photo.jpg")
+if SAVE_LAST_FRAME:
+    img_path = os.path.join(script_dir, "imgs", "photo.jpg")
+    cv2.imwrite(img_path, frame)
+    print("Saved photo.jpg")
 
 # --- Cleanup ---
 cap.release()

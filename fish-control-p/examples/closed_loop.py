@@ -3,6 +3,7 @@ import sys
 
 import math
 import time
+import cv2
 
 root_dir = os.path.abspath(os.curdir)
 sys.path.insert(0, root_dir)
@@ -38,7 +39,7 @@ REF_SURGE = 1
 REF_YAW = 0
 
 # --- General Parameters ---
-MODE = "test" # "closed_loop"
+MODE = "closed_loop" # "closed_loop"
 
 # For MODE == "test"
 PHI_TAIL = 0    # degrees
@@ -54,21 +55,22 @@ LOG          = False
 LOG_FILENAME = "fish_robot_close_loop_log.xlsx"
 PRINT        = False
 
-USE_COMMS = True
+USE_COMMS = False
 USE_VISION = True
 
 # --- Initialize communication interface ---
 try:
-    fish_robot = Fish_Control_Comms(
-        arduino_port="COM22",
-        arduino_baudrate=115200,
-        dynamixel_port="COM18",
-        dynamixel_baudrate=57600,
-        dynamixel_ID=1,
-        dynamixel_velocity=310
-    )
-    fish_robot.connect_devices()
-    print("[INFO] Fish control communication initialized")
+    if USE_COMMS:
+        fish_robot = Fish_Control_Comms(
+            arduino_port="COM22",
+            arduino_baudrate=115200,
+            dynamixel_port="COM18",
+            dynamixel_baudrate=57600,
+            dynamixel_ID=1,
+            dynamixel_velocity=310
+        )
+        fish_robot.connect_devices()
+        print("[INFO] Fish control communication initialized")
 except:
     USE_COMMS = False
     print("[ERROR] Fish control communication not initialized")
@@ -77,6 +79,11 @@ except:
 try:
     vision = Fish_Vision(0, LOOP_DT)
     print("[INFO] Vision initialized")
+
+    for attempt in range(10):
+        if vision.calibrate():
+            print("[INFO] Vision calibration successful")
+            break
 except:
     USE_VISION = False
     print("[ERROR] Vision not initialized")
@@ -128,7 +135,9 @@ try:
         elif MODE == "closed_loop":
             
             if USE_VISION:
-                x, y, yaw, surge, yaw_rate = vision.get_fish_state()
+                x, y, yaw, surge, yaw_rate, frame = vision.get_fish_state(use_yolo=False,get_output=True)
+
+                cv2.imshow("Fish Camera Feed", frame)
             else:
                 yaw = 0
                 surge = 0

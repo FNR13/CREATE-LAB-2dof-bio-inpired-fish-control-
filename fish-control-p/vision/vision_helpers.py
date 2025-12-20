@@ -36,10 +36,11 @@ def getCenters(corners, ids):
 
 def drawAxes(img, corner, imgpts):
     corner = tuple(int(x) for x in corner.ravel())
-    imgpts = imgpts.reshape(-1, 2)  # (3,2)
-
+    imgpts = imgpts.reshape(-1, 2)
     imgpts = [tuple(map(int, pt)) for pt in imgpts]
-    img = cv2.line(img, corner, tuple(imgpts[0]), (255,0,0), 5)  # X - red
-    img = cv2.line(img, corner, tuple(imgpts[1]), (0,255,0), 5)  # Y - green
-    img = cv2.line(img, corner, tuple(imgpts[2]), (0,0,255), 5)  # Z - blue
+
+    img = cv2.line(img, corner, tuple(imgpts[0]), (255, 0, 0), 5)  # X - red
+    img = cv2.line(img, corner, tuple(imgpts[1]), (0, 255, 0), 5)  # Y - green
+    img = cv2.line(img, corner, tuple(imgpts[2]), (0, 0, 255), 5)  # Z - blue
     return img
+

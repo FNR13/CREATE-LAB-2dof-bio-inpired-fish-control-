@@ -1,5 +1,8 @@
-from controllers.pid_controller import PID_Controller
-
+try:
+    from .controllers.pid_controller import PID_Controller
+except:
+    from controllers.pid_controller import PID_Controller
+    
 class SimpleController:
     """Controller that uses two PID controllers: one for surge and one for yaw."""
 

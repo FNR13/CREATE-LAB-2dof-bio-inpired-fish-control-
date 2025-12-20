@@ -29,6 +29,8 @@ if not USE_CAMERA:
         exit()
 else:
     cap = open_camera(CAMERA_INDEX)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 # --- Detection loop ---
 while True:

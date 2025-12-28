@@ -35,9 +35,9 @@ while True:
 
 # --- Save the last captured frame ---
 if SAVE_LAST_FRAME:
-    img_path = os.path.join(script_dir, "imgs", "photo.jpg")
+    img_path = os.path.join(script_dir, "imgs", "get_img.jpg")
     cv2.imwrite(img_path, frame)
-    print("Saved photo.jpg")
+    print("Saved get_img.jpg")
 
 # --- Cleanup ---
 cap.release()

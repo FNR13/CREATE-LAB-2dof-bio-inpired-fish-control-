@@ -74,9 +74,9 @@ class Fish_Vision:
             if not ret:
                 print("[VISION - ERROR] Failed to grab frame from camera")
                 return False
-            
+        
         imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
+        
         # Detect markers
         corners, ids, _ = cv2.aruco.detectMarkers(
             imgGray,
@@ -128,7 +128,6 @@ class Fish_Vision:
                 axis_length = int(DRAWING["axis_length_meters"])
                 
                 axis = np.float32([[axis_length, 0, 0], [0, axis_length, 0], [0, 0, 0]])
-                axis = np.float32([[0.50, 0, 0], [0, 0.50, 0], [0, 0, 0]])
                 imgpts, _ = cv2.projectPoints(axis, self.rvec, self.tvec, self.camera_matrix, self.dist_coeffs)
                 img_copy = drawAxes(img_copy, known_centers[0], imgpts)
             
@@ -152,7 +151,7 @@ class Fish_Vision:
         """Projects world point (X, Y, Z) to image pixel (u, v)."""
 
         if not self.calibrated:
-            print("[VISION - ERROR]Please calibrate first")
+            print("[VISION - ERROR] Please calibrate first")
             return (0, 0)
 
         # World point
@@ -195,12 +194,14 @@ class Fish_Vision:
         Detects the fish using global thresholding + contour filtering + PCA.
             """
 
+        # --- Failsafe ---
+        found = False
         if not self.calibrated:
-            print("[VISION - ERROR]Please calibrate first")
-            return (0, 0, 0)
+            print("[VISION - ERROR] Please calibrate first")
+            return found, None, None, None
 
+        # --- Crop for pool ---
         if img.shape[:2] == (720, 1280):
-            # Crop to pool area
             x1, y1 = self.pool_pixels[0]
             x2, y2 = self.pool_pixels[1]
 
@@ -209,24 +210,42 @@ class Fish_Vision:
             y1, y2 = min(y1, y2), max(y1, y2)
 
             img_analysis = img[y1:y2, x1:x2]
+
             croped = True
         else:
-            img_analysis = img
+            img_analysis = img.copy()
             croped = False
 
+        # --- Vision algorithm ---
+        cfg_f = FISH_DETECTION["Filtering"]
         cfg_t = FISH_DETECTION["threshold"]
+        cfg_m = FISH_DETECTION["morphology"]
         cfg_c = FISH_DETECTION["contours"]
 
         img_gray = cv2.cvtColor(img_analysis, cv2.COLOR_BGR2GRAY)
 
-        ret, thresh = cv2.threshold(
-            img_gray, 
-            cfg_t["binary_min"], cfg_t["binary_max"], 
-            cv2.THRESH_BINARY
-        )
+        blur = cv2.GaussianBlur(img_gray, cfg_f["gaussian_blur_size"], 0)
+
+        if cfg_t["method"] == "binary":
+            _, thresh = cv2.threshold(
+                blur, 255,  
+                cfg_t["binary_min"], cfg_t["binary_max"],    
+                cv2.THRESH_BINARY
+            )
+        else: 
+            thresh = cv2.adaptiveThreshold(
+                blur, 255,
+                cv2.ADAPTIVE_THRESH_MEAN_C,
+                cv2.THRESH_BINARY,
+                blockSize=cfg_t["adaptive_block"],
+                C=cfg_t["adaptive_C"]
+            )
+
+        kernel = cv2.getStructuringElement(cfg_m["kernel"], cfg_m["size"])
+        morph = cv2.morphologyEx(thresh, cv2.MORPH_DILATE, kernel, iterations=cfg_m["iterations"])
 
         contours, hierarchy = cv2.findContours(
-            image=thresh, 
+            image=morph, 
             mode=cv2.RETR_TREE, 
             method=cv2.CHAIN_APPROX_NONE
         )
@@ -240,28 +259,63 @@ class Fish_Vision:
                 fish_contours.append(cnt)
 
         if len(fish_contours) == 0:
-            print("[VISION - ERROR]No valid fish detected.")
-            return None, None, None
+            return found, None, None, None
+
+        found = True
 
         data_pts = np.vstack(fish_contours).reshape(-1, 2).astype(np.float32)
 
         # PCA to determine centroid and orientation
         mean, eigenvectors, eigenvalues = cv2.PCACompute2(data_pts, mean=None)
+        principal_vec = eigenvectors[0] # First principal component (legth direction)
+        perp_vec = eigenvectors[1] 
 
+        # Get orientation
+        relative_pts = data_pts - mean[0]
+
+        projections_along  = np.dot(relative_pts, principal_vec)
+    
+        num_samples = 10
+        sample_positions = np.linspace(projections_along .min(),  projections_along .max(), num_samples)
+        sample_widths = []
+
+        tolerance = 10
+
+        for s in sample_positions:
+            mask = np.abs(projections_along  - s) < tolerance
+            if np.any(mask):
+                local_pts = relative_pts[mask]
+
+                perp_proj = np.dot(local_pts, perp_vec)
+                width = perp_proj.max() - perp_proj.min()
+            else:
+                width = 0
+            sample_widths.append(width)
+
+            left_width = sample_widths[0:num_samples//2]
+            right_width = sample_widths[num_samples//2:]
+
+        if left_width and right_width:
+            mean_left_width = np.mean(left_width)
+            mean_right_width = np.mean(right_width)
+
+        if mean_right_width > mean_left_width:
+            principal_vec = -principal_vec
+            
         u, v  = mean[0] 
         if croped:
             u += x1
             v += y1
 
-        angle = np.arctan2(eigenvectors[0,1], eigenvectors[0,0])
+        angle = np.arctan2(principal_vec[1], principal_vec[0])
 
         if show_output:
             img_copy = img.copy()
             cv2.circle(img_copy, (int(u), int(v)), 6, (0, 0, 255), -1)
 
             axis_length = DRAWING["axis_length_pixels"]
-            x2 = int(u + axis_length * -eigenvectors[0,0])
-            y2 = int(v + axis_length * -eigenvectors[0,1])
+            x2 = int(u + axis_length * principal_vec[0])
+            y2 = int(v + axis_length * principal_vec[1])
             cv2.line(img_copy, (int(u), int(v)), (x2, y2), (255, 0, 0), 3)
             
             if croped:
@@ -274,17 +328,19 @@ class Fish_Vision:
 
             cv2.imshow('Contours', img_copy)
             cv2.waitKey(0)
-        return int(u), int(v), angle
+
+        return True, int(u), int(v), angle
     
     def detect_fish_yolo(self, img, show_output=False):
         """
         Detects the fish using YOLO to get a bounding box, then applies the
         existing contour + PCA method.
         """
+        found = False
 
         if not self.calibrated:
-            print("[VISION - ERROR]Please calibrate first")
-            return (0, 0, 0)
+            print("[VISION - ERROR] Please calibrate first")
+            return found, None, None, None
         
         results = self.model.predict(img, conf=self.yolo_conf, verbose=False)
         detections = results[0].boxes
@@ -293,8 +349,9 @@ class Fish_Vision:
         filtered_dets = detections[mask]
 
         if len(filtered_dets) == 0:
-            print("[VISION - ERROR] No fish detected in YOLO.")
-            return None, None, None
+            return found, None, None, None
+
+        found = True
 
         # Pick highest confidence detection
         confs = filtered_dets.conf.cpu().numpy()
@@ -307,15 +364,10 @@ class Fish_Vision:
 
         crop = img[y1:y2, x1:x2]
 
-        if crop.size == 0:
-            print("[VISION - ERROR] Invalid crop region.")
-            return None, None, None
+        found, u_local, v_local, angle = self.detect_fish(crop, show_output=False)
 
-        u_local, v_local, angle = self.detect_fish(crop, show_output=False)
-
-        if u_local is None:
-            print("[VISION - ERROR] No fish detected in contours.")
-            return None, None, None
+        if not found:
+            return found, None, None, None
 
         # Convert local centroid → full image coordinates
         u_full = int(x1 + u_local)
@@ -338,67 +390,45 @@ class Fish_Vision:
             cv2.imshow("YOLO + PCA Fish Detection", img_copy)
             cv2.waitKey(0)
 
-        return u_full, v_full, angle
+        return found, u_full, v_full, angle
 
-    def get_fish_state(self, use_yolo=False, get_output=False):
+    def get_fish_state(self, img = False, use_yolo=False, get_output=False):
 
-        ret, img = self.cap.read()
-        if not ret:
-            print("[VISION - ERROR] Failed to grab frame")
-            return
+        if img is False:
+            ret, img = self.cap.read()
+            if not ret:
+                print("[VISION - ERROR] Failed to grab frame from camera")
+                return False, None, None, None, None, None
         
         if not use_yolo:
-            u, v, angle = self.detect_fish(img)
+            found, u, v, angle = self.detect_fish(img)
         else: 
-            u, v, angle = self.detect_fish_yolo(img)
+            found, u, v, angle = self.detect_fish_yolo(img)
 
+        if not found:
+            print("[VISION - ERROR] Fish not detected.")
+            return found, None, None, None, None, None
+        
         yaw = angle
         x, y = self.project_pixel_to_world(u, v)
 
-        if self.last_x==None or self.last_y==None or self.last_yaw==None:
-            return x, y, yaw, 0, 0,  # return surge and yaw rate as 0 for initialization
-        else:
-            distance = math.sqrt((x - self.last_x)**2 + (y - self.last_y)**2)
-            surge = distance/self.delta_t
-            yaw_rate = (yaw - self.last_yaw)/self.delta_t
+        if self.last_x is None:
+            # Initialization
+            self.last_x = x
+            self.last_y = y
+            self.last_yaw = yaw
+            return found, x, y, yaw, 0, 0
+
+        distance = math.sqrt((x - self.last_x)**2 + (y - self.last_y)**2)
+        surge = distance/self.delta_t
+        yaw_rate = (yaw - self.last_yaw)/self.delta_t
 
         # Update last known state
         self.last_x = x
         self.last_y = y
         self.last_yaw = yaw
 
-        # Draw results if requested
-        if get_output:
-
-            # Draw fish/robot centroid
-            cv2.circle(img, (int(u), int(v)), 6, (0, 0, 255), -1)
-
-            # Draw orientation arrow
-            axis_length = DRAWING["axis_length_pixels"]
-            x2 = int(u - axis_length * math.cos(yaw))
-            y2 = int(v - axis_length * math.sin(yaw))
-            cv2.arrowedLine(img, (int(u), int(v)), (x2, y2), (255, 0, 0), 3, tipLength=0.2)
-
-            # Draw text: position, surge, yaw_rate
-            text_lines = [
-                f"X: {x:.2f} m",
-                f"Y: {y:.2f} m",
-                f"Surge: {surge:.2f} m/s",
-                f"Yaw rate: {yaw_rate:.2f} rad/s"
-            ]
-            for i, line in enumerate(text_lines):
-                cv2.putText(
-                    img,
-                    line,
-                    (10, 30 + i * 30),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
-                    (0, 255, 0),
-                    2
-                )
-        print("State:", x, y, yaw, surge, yaw_rate)
-
-        return x, y, yaw, surge, yaw_rate, img
+        return found, x, y, yaw, surge, yaw_rate
 
 
 

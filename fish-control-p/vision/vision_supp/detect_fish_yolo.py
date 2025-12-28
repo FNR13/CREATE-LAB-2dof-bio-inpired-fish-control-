@@ -10,8 +10,10 @@ from ultralytics import YOLO
 # -------------------------------
 CAMERA_INDEX = 0
 USE_CAMERA = False
-IMG_NAME = "pool_fish.png"
-MODEL_NAME = "yolo11s.pt" # 
+VIDEO_NAME = "pool_test2.mp4"
+USE_VIDEO = True
+IMG_NAME = "fish.jpg"
+MODEL_NAME = "yolo11l.pt" # 
 # -------------------------------
 
 model = YOLO(os.path.join(script_dir, "YOLO_models", MODEL_NAME))
@@ -34,6 +36,23 @@ if USE_CAMERA:
             break
 
     print("👋 Webcam detection stopped")
+elif USE_VIDEO:
+    video_path = os.path.join(script_dir, "..", "media",  VIDEO_NAME)
+    results = model.predict(
+        source=video_path,  
+        show=True,  
+        stream=True,  
+        verbose=False
+    )
+
+    print(f"🎥 Starting video detection on {video_path}...")
+    print("Press 'q' to quit")
+
+    for r in results:
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    print("👋 Video detection stopped")
 else:
     img = cv2.imread(os.path.join(script_dir, "imgs", IMG_NAME))
     results = model.predict(source=img)

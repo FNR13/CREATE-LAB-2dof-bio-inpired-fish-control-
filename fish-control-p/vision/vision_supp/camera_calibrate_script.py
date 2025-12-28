@@ -9,20 +9,23 @@ import numpy as np
 # -------------------------------
 # PARAMETERS
 # -------------------------------
-IMAGE_DIR     = "camera calib imgs"  # folder with saved chessboard images
-CHESSBOARD_SIZE = (8, 5)        # inner corners (columns, rows)
-SQUARE_SIZE_M   = 0.043         # square size in meters
-OUTPUT_FILE     = "camera_calib.npz"
-MIN_VIEWS       = 5             # minimum number of successful chessboard detections
-CORNER_SHIFT_THR = 1.0          # max allowed mean shift of corners (pixels)
+IMAGE_DIR     = "camera calib imgs"  
+CHESSBOARD_SIZE  = (8, 5) # (cols, rows)
+SQUARE_SIZE_M    = 0.043  # in meters
+CORNER_SHIFT_THR = 1.0      
 BLUR_THR         = 100 
+MIN_VIEWS        = 5             
+OUTPUT_FILE      = "camera_calib.npz"
 # -------------------------------
 
 image_dir = os.path.join(script_dir, IMAGE_DIR)
 
-# Prepare object points for the chessboard corners
+# --- Prepare object points ---
 objp = np.zeros((CHESSBOARD_SIZE[1]*CHESSBOARD_SIZE[0], 3), np.float32)
-objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)
+objp[:, :2] = np.mgrid[
+    0:CHESSBOARD_SIZE[0], 
+    0:CHESSBOARD_SIZE[1]
+].T.reshape(-1, 2)
 objp *= SQUARE_SIZE_M
 
 objpoints = []  # 3D points in real world space
@@ -46,6 +49,7 @@ for idx, fname in enumerate(images):
     img = cv2.imread(fname)
     if img is None:
         continue
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     h, w = gray.shape
     
@@ -58,9 +62,19 @@ for idx, fname in enumerate(images):
     display = img.copy()
 
     if found:
-        # Refine corner positions
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-        corners_subpix = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria)
+        criteria = (
+            cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 
+            30, 
+            0.001
+        )
+
+        corners_subpix = cv2.cornerSubPix(
+            gray,
+            corners, 
+            (11,11), 
+            (-1,-1), 
+            criteria
+        )
 
         # Check corner shift (quality of refinement)
         shift = np.mean(np.linalg.norm(corners_subpix - corners, axis=2))
@@ -109,7 +123,9 @@ print("Calibration RMS reprojection error:", ret)
 print("Camera matrix:\n", camera_matrix)
 print("Distortion coefficients:\n", dist_coeffs.ravel())
 
-# Save calibration results
-output_path = os.path.join(script_dir, OUTPUT_FILE)
-np.savez(output_path, camera_matrix=camera_matrix, dist_coeffs=dist_coeffs)
-print(f"Calibration saved to {output_path}")
+np.savez(
+    os.path.join(script_dir, OUTPUT_FILE),
+    camera_matrix=camera_matrix, 
+    dist_coeffs=dist_coeffs)
+
+print(f"Calibration saved to {OUTPUT_FILE}")

@@ -1,9 +1,12 @@
 import os
 import sys
 
+import cv2
+import numpy as np
 import math
 import time
-import cv2
+from PIL import Image
+import importlib.resources
 
 root_dir = os.path.abspath(os.curdir)
 sys.path.insert(0, root_dir)
@@ -80,14 +83,22 @@ try:
     vision = Fish_Vision(0, LOOP_DT)
     print("[INFO] Vision initialized")
 
-    for attempt in range(10):
+    for attempt in range(5):
         if vision.calibrate():
             print("[INFO] Vision calibration successful")
-            break
+        time.sleep(0.5)
+
+    if not vision.calibrated:
+        with importlib.resources.path('vision.media', 'calibration', 'calibration_fallback.jpg') as img_path:
+            pil_img = Image.open(img_path).convert("RGB")  # Ensure RGB
+            calibration_img = np.array(pil_img) 
+
+        print("[INFO] Using fallback calibration image")
+        vision.calibrate(calibration_img)
 except:
     USE_VISION = False
     print("[ERROR] Vision not initialized")
-    
+
 # --- Initialize Controller --- 
 controller = SimpleController(
     (KP_SURGE, KI_SURGE, KD_SURGE),
@@ -135,12 +146,15 @@ try:
         elif MODE == "closed_loop":
             
             if USE_VISION:
-                x, y, yaw, surge, yaw_rate, frame = vision.get_fish_state(use_yolo=False,get_output=True)
+                valid, x, y, yaw, surge, yaw_rate = vision.get_fish_state(use_yolo=False,get_output=True)
 
-                cv2.imshow("Fish Camera Feed", frame)
             else:
                 yaw = 0
                 surge = 0
+
+            if not valid:
+                surge = 0
+                yaw = 0
 
             amplitude, bias = controller.update(
                 surge_ref=REF_SURGE,

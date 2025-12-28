@@ -8,19 +8,18 @@ sys.path.insert(0, parent_dir)
 
 import cv2
 import time
-
 from vision_helpers import open_camera
 
 # -------------------------------
 # Parameters
 # -------------------------------
-board_size = (8, 5)          # inner corners (columns, rows)
-save_interval = 1.5          # seconds
-camera_id = 0
+CAMERA_INDEX = 0
+CHESSBOARD_SIZE = (8, 5) 
+COOLDOWN_TIMER = 1.5  
 # -------------------------------
 
 # --- Setup ---
-cap = open_camera(camera_id)
+cap = open_camera(CAMERA_INDEX)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 cap.set(cv2.CAP_PROP_FPS, 30)
@@ -42,24 +41,30 @@ while True:
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     found, corners = cv2.findChessboardCorners(
-        gray, board_size,
-        cv2.CALIB_CB_ADAPTIVE_THRESH +
-        cv2.CALIB_CB_NORMALIZE_IMAGE
+        gray, 
+        CHESSBOARD_SIZE,
+        cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
     )
 
     if found:
-        # Refine corners
-        corners = cv2.cornerSubPix(
-            gray, corners, (11, 11), (-1, -1),
-            criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        cv2.drawChessboardCorners(frame, CHESSBOARD_SIZE, corners_subpix, found)
+
+        criteria = (
+            cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
+            30,
+            0.001
+        )
+        
+        corners_subpix = cv2.cornerSubPix(
+            gray,
+            corners,
+            (11, 11),
+            (-1, -1),
+            criteria
         )
 
-        # Draw corners
-        cv2.drawChessboardCorners(frame, board_size, corners, found)
-
-        # Save at most once per second
         current_time = time.time()
-        if current_time - last_save_time >= save_interval:
+        if current_time - last_save_time >= COOLDOWN_TIMER:
             filename = os.path.join(save_dir, f"calib_{img_count:03d}.png")
             cv2.imwrite(filename, gray)
             print(f"Saved {filename}")

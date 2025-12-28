@@ -13,9 +13,10 @@ from vision_helpers import open_camera
 # Parameters
 # -------------------------------
 CAMERA_INDEX = 0
-CHESSBOARD_SIZE = (8, 5)   # (cols, rows)
+CHESSBOARD_SIZE = (8, 5)  # (cols, rows)
 SQUARE_SIZE_M   = 0.043   # in meters
-COOLDOWN_TIMER  = 30       # Frames to wait between capture
+COOLDOWN_TIMER  = 30      # Frames to wait between capture
+MIN_VIEWS       = 5  
 OUTPUT_FILE     = "camera_calib.npz"
 # -------------------------------
 
@@ -50,7 +51,6 @@ while True:
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    # Detect chessboard corners
     found, corners = cv2.findChessboardCorners(
         gray,
         CHESSBOARD_SIZE,
@@ -106,7 +106,7 @@ cv2.destroyAllWindows()
 # --- Perform calibration ---
 print(len(objpoints))
 
-if len(objpoints) < 5:
+if len(objpoints) < MIN_VIEWS:
     print("Not enough views to calibrate (need ~10+ ideally).")
     sys.exit(0)
 

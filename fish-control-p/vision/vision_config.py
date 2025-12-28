@@ -39,18 +39,28 @@ YOLO_CFG = {
 
 
 FISH_DETECTION = {
+    "Filtering": {
+        "gaussian_blur_size": (5, 5),
+    },
+
     "threshold": {
-        "method": "binary",   # "binary" / "otsu" / "adaptive"
+        "method": "adaptive",  # "binary" or "adaptive"
         "binary_min": 125,
         "binary_max": 255,
 
-        # Adaptive threshold parameters
-        "adaptive_block": 11,
-        "adaptive_C": 2
+        "adaptive_block": 251,
+        "adaptive_C": 20,
+
+    },
+
+    "morphology": {
+        "kernel": cv2.MORPH_ELLIPSE,
+        "size": (7, 7),
+        "iterations": 1
     },
 
     "contours": {
-        "min_area": 1000,
+        "min_area": 500,
         "max_area": 50000
     }
 }

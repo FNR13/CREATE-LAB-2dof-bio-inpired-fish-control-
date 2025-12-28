@@ -6,8 +6,8 @@ parent_dir = os.path.abspath(os.path.join(script_dir, ".."))
 sys.path.insert(0, parent_dir)
 
 import cv2
-import time
 from vision_helpers import open_camera
+import time
 
 # -------------------------------
 # Parameters
@@ -18,21 +18,14 @@ FPS = 20.0
 FRAME_WIDTH = 1280
 FRAME_HEIGHT = 720
 RECORD_SECONDS = 20   # set None for infinite
+# -------------------------------
 
-# ------------------------
-# Open camera
-# ------------------------
 cap = open_camera(CAMERA_INDEX)
 print(f"Camera {CAMERA_INDEX} opened successfully.")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-if not cap.isOpened():
-    raise RuntimeError("❌ Cannot open camera")
-
-# ------------------------
-# Video writer
-# ------------------------
+# --- Setup video writer ---
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 out = cv2.VideoWriter(
     os.path.join(script_dir, "imgs", OUTPUT_FILE),
@@ -50,7 +43,6 @@ while True:
     if not ret:
         break
 
-    # ---- OPTIONAL: draw something ----
     cv2.putText(
         frame,
         "Recording",

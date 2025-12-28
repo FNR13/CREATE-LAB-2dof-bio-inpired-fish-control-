@@ -16,8 +16,8 @@ from vision import Fish_Vision
 # Parameters
 # -------------------------------
 CAMERA_INDEX = 0
-USE_CAMERA = True
-IMG_NAME = "photo1.jpg"  
+USE_CAMERA = False
+IMG_NAME = "pool_fish2.jpg"  
 SHOW_OUTPUT = True
 # -------------------------------
 
@@ -51,9 +51,9 @@ fv.pool_pixels = [(181, 53), (1099, 659)]
 # --- Test detect_fish() - full frame ---
 print("\n--- Testing detect_fish() ---")
 
-u1, v1, ang1 = fv.detect_fish(img.copy(), show_output=SHOW_OUTPUT)
+valid, u1, v1, ang1 = fv.detect_fish(img.copy(), show_output=SHOW_OUTPUT)
 
-if u1 is None:
+if not valid:
     print("❌ detect_fish(): No fish detected.")
 else:
     print(f"🐟 detect_fish() → pixel=({u1:.1f}, {v1:.1f}), angle={np.degrees(ang1):.2f}°")
@@ -61,9 +61,9 @@ else:
 
 # --- Test detect_fish_yolo() - YOLO + ROI ---
 print("\n--- Testing detect_fish_yolo() ---")
-u2, v2, ang2 = fv.detect_fish_yolo(img.copy(), show_output=SHOW_OUTPUT)
+valid, u2, v2, ang2 = fv.detect_fish_yolo(img.copy(), show_output=SHOW_OUTPUT)
 
-if u2 is None:
+if not valid:
     print("❌ detect_fish_yolo(): No fish detected.")
 else:
     print(f"🐟 detect_fish_yolo() → pixel=({u2:.1f}, {v2:.1f}), angle={np.degrees(ang2):.2f}°")

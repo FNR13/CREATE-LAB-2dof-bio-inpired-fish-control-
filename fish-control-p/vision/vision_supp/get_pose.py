@@ -15,36 +15,24 @@ from vision_config import MARKERS, CALIBRATION
 # -------------------------------
 CAMERA_INDEX = 0
 USE_CAMERA = False
-IMG_NAME = "photo1.jpg"
-# IMG_NAME = "test_paper.png"
+IMG_NAME = "pool_fish2.jpg"
 
-# ArUco / AprilTag initialization
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_36h11)
 parameters = cv2.aruco.DetectorParameters()
+# -------------------------------
 
-if IMG_NAME == "pool_test.jpg" or IMG_NAME == "photo1.jpg":
-    KNOWN_MARKERS = [0, 1, 2]
-    MARKER_POSTIONS_3D = np.array([
-        [0.00, 0.00, 0.00],   # ID 4
-        [0.00, 1.75, 0.00],   # ID 3
-        [2.75, 0.00, 0.00],   # ID 1
-    ], dtype=np.float32)
+KNOWN_MARKERS = [0, 1, 2]
+MARKER_POSTIONS_3D = np.array([
+    [0.00, 0.00, 0.00],   # ID 4
+    [0.00, 1.75, 0.00],   # ID 3
+    [2.75, 0.00, 0.00],   # ID 1
+], dtype=np.float32)
 
-    TARGET_MARKERS = [0, 2]
-    GROUND_TRUTH = {
-        0: (0.37, 0.80),
-        2: (1.35, 0.70)
-    }
-
-else:
-    KNOWN_MARKERS = [0, 1, 2]
-    MARKER_POSTIONS_3D = np.array([
-        [0.00, 0.00, 0.00],   # ID 0
-        [0.50, 0.00, 0.00],   # ID 1
-        [0.00, 1.00, 0.00],   # ID 2
-    ], dtype=np.float32)
-
-    TARGET_MARKERS = [4, 3]
+TARGET_MARKERS = [0, 2]
+GROUND_TRUTH = {
+    0: (0.37, 0.80),
+    2: (1.35, 0.70)
+}
 
 # --- Load image ---
 if not USE_CAMERA:

@@ -7,7 +7,6 @@ sys.path.insert(0, parent_dir)
 
 import cv2
 import numpy as np
-import time
 
 from vision_helpers import open_camera
 from vision import Fish_Vision  
@@ -26,11 +25,11 @@ if not USE_CAMERA:
     img_path = os.path.join(parent_dir, "vision_supp", "imgs", IMG_NAME)
     img = cv2.imread(img_path)
     if img is None:
-        print(f"❌ Could not load image: {img_path}")
+        print(f"Could not load image: {img_path}")
         exit()
-    print(f"📷 Loaded image: {IMG_NAME}")
+    print(f"Loaded image: {IMG_NAME}")
 else:
-    print("📹 Using webcam...")
+    print("Using webcam...")
     cap = open_camera(CAMERA_INDEX)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -39,11 +38,11 @@ else:
         ret, img = cap.read()
     cap.release()
     if not ret:
-        print("❌ Failed to read from webcam")
+        print("Failed to read from webcam")
         exit()
 
 fv = Fish_Vision(camera_index=0)
-print("🔧 Vision class initialized.")
+print("Vision class initialized.")
 
 fv.calibrated = True
 fv.pool_pixels = [(181, 53), (1099, 659)]

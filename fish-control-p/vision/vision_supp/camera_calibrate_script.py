@@ -7,18 +7,25 @@ import cv2
 import numpy as np
 
 # -------------------------------
-# PARAMETERS
+# Parameters
 # -------------------------------
-IMAGE_DIR     = "camera calib imgs"  
-CHESSBOARD_SIZE  = (8, 5) # (cols, rows)
-SQUARE_SIZE_M    = 0.043  # in meters
-CORNER_SHIFT_THR = 1.0      
-BLUR_THR         = 100 
-MIN_VIEWS        = 5             
-OUTPUT_FILE      = "camera_calib.npz"
+IMAGE_DIR = "camera calib imgs"
+CHESSBOARD_SIZE = (8, 5)  # (cols, rows) *corners inside
+SQUARE_SIZE_M = 0.043  # in meters
+CORNER_SHIFT_THR = 1.0
+BLUR_THR = 100
+MIN_VIEWS = 5
+OUTPUT_FILE = "camera_calib.npz"
 # -------------------------------
 
+# --- Setup ---
 image_dir = os.path.join(script_dir, IMAGE_DIR)
+
+images = sorted([
+    os.path.join(image_dir, f)
+    for f in os.listdir(image_dir)
+    if f.lower().endswith((".png", ".jpg", ".jpeg"))
+])
 
 # --- Prepare object points ---
 objp = np.zeros((CHESSBOARD_SIZE[1]*CHESSBOARD_SIZE[0], 3), np.float32)
@@ -28,15 +35,8 @@ objp[:, :2] = np.mgrid[
 ].T.reshape(-1, 2)
 objp *= SQUARE_SIZE_M
 
-objpoints = []  # 3D points in real world space
-imgpoints = []  # 2D points in image plane
-
-# Load all images
-images = sorted([
-    os.path.join(image_dir, f)
-    for f in os.listdir(image_dir)
-    if f.lower().endswith((".png", ".jpg", ".jpeg"))
-])
+objpoints = []  # 3D world coordinates
+imgpoints = []  # 2D image coordinates
 
 if not images:
     print(f"No images found in {image_dir}")
@@ -44,7 +44,7 @@ if not images:
 
 print(f"Found {len(images)} images in {image_dir}")
 
-# Process each image
+# --- Process each image ---
 for idx, fname in enumerate(images):
     img = cv2.imread(fname)
     if img is None:

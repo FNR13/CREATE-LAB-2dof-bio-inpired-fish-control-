@@ -1,4 +1,3 @@
-# Imports
 import os
 import sys
 
@@ -36,7 +35,7 @@ for i in range(5):
     time.sleep(0.5)
 
 # --- Optional Dynamixel movement tests ---
-# Uncomment to run
+
 # print("\nMoving Dynamixel to 0 degrees")
 # value = dynamixel_angle_to_position(0)
 # print("Dynamixel value:", value)

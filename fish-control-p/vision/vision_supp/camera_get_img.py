@@ -16,9 +16,10 @@ SAVE_LAST_FRAME = True
 # -------------------------------
 
 cap = open_camera(CAMERA_INDEX)
-print(f"Camera {CAMERA_INDEX} opened successfully.")
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+print("Press 'Esc' to quit")
 
 # --- Live camera feed loop ---
 while True:
@@ -29,8 +30,8 @@ while True:
 
     cv2.imshow("Camera Feed", frame)
 
-    # Quit on 'q'
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    key = cv2.waitKey(1) & 0xFF
+    if key == 27:  # ESC
         break
 
 # --- Save the last captured frame ---

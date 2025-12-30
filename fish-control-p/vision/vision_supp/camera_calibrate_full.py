@@ -8,17 +8,28 @@ sys.path.insert(0, parent_dir)
 import cv2
 import numpy as np
 from vision_helpers import open_camera
+import time
 
 # -------------------------------
 # Parameters
 # -------------------------------
 CAMERA_INDEX = 0
-CHESSBOARD_SIZE = (8, 5)  # (cols, rows)
-SQUARE_SIZE_M   = 0.043   # in meters
-COOLDOWN_TIMER  = 30      # Frames to wait between capture
-MIN_VIEWS       = 5  
-OUTPUT_FILE     = "camera_calib.npz"
+CHESSBOARD_SIZE = (8, 5)  # (cols, rows) *corners inside
+SQUARE_SIZE_M = 0.043  # in meters
+COOLDOWN_TIMER = 1.5
+MIN_VIEWS = 5
+OUTPUT_FILE = "camera_calib.npz"
 # -------------------------------
+
+# --- Setup ---
+cap = open_camera(CAMERA_INDEX)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+last_capture_time = 0.0
+
+save_dir = os.path.join(script_dir, "camera calibration data")
+os.makedirs(save_dir, exist_ok=True)  # create folder if it doesn't exist
 
 # --- Prepare object points ---
 objp = np.zeros((CHESSBOARD_SIZE[1] * CHESSBOARD_SIZE[0], 3), np.float32)
@@ -31,16 +42,7 @@ objp *= SQUARE_SIZE_M
 objpoints = []  # 3D world coordinates
 imgpoints = []  # 2D image coordinates
 
-cap = open_camera(CAMERA_INDEX)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
-print("Camera calibration")
-print("-------------------")
-print("Press ESC when you have collected enough views to calibrate.")
-print(f"Chessboard inner corners: {CHESSBOARD_SIZE}, square size: {SQUARE_SIZE_M} m")
-
-cooldown = 0
+print("Press 'Esc' to quit")
 
 # --- Calibration capture loop ---
 while True:
@@ -57,16 +59,12 @@ while True:
         cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
     )
 
-    display = frame.copy()
-
-    if cooldown > 0:
-        cooldown -= 1
-
     if found:
-        cv2.drawChessboardCorners(display, CHESSBOARD_SIZE, corners, found)
+        cv2.drawChessboardCorners(frame, CHESSBOARD_SIZE, corners, found)
         text = "Chessboard detected"
 
-        if cooldown == 0:
+        
+        if time.time() - last_capture_time >= COOLDOWN_TIMER:
             criteria = (
                 cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
                 30,
@@ -85,16 +83,16 @@ while True:
             imgpoints.append(corners_subpix)
             print(f"Captured view #{len(objpoints)}")
 
-            cooldown = COOLDOWN_TIMER
+            last_capture_time = time.time()
     else:
         text = "Show chessboard to the camera"
 
-    cv2.putText(display, text, (20, 30),
+    cv2.putText(frame, text, (20, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-    cv2.putText(display, f"Captured views: {len(objpoints)}", (20, 60),
+    cv2.putText(frame, f"Captured views: {len(objpoints)}", (20, 60),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
-    cv2.imshow("Calibration", display)
+    cv2.imshow("Calibration", frame)
 
     key = cv2.waitKey(1) & 0xFF
     if key == 27:  # ESC
@@ -125,7 +123,7 @@ print("Camera matrix:\n", camera_matrix)
 print("Distortion coefficients:\n", dist_coeffs.ravel())
 
 np.savez(
-    os.path.join(script_dir, OUTPUT_FILE),
+    os.path.join(save_dir, OUTPUT_FILE),
     camera_matrix=camera_matrix,
     dist_coeffs=dist_coeffs
 )

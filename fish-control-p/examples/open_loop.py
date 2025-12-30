@@ -1,13 +1,11 @@
 import os
 import sys
 
-import math
-import time
-
-
 root_dir = os.path.abspath(os.curdir)
 sys.path.insert(0, root_dir)
 
+import math
+import time
 from support_scripts_py.fish_control_comms import Fish_Control_Comms 
 from support_scripts_py.kinematics import inverse_tail, dynamixel_angle_to_position, dynamixel_position_to_angle, fin_to_servo
 from support_scripts_py.logger import DataLogger, plot_log

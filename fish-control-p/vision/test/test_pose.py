@@ -6,6 +6,7 @@ parent_dir = os.path.abspath(os.path.join(script_dir, ".."))
 sys.path.insert(0, parent_dir)
 
 import cv2
+import time
 import numpy as np
 from vision_helpers import open_camera
 from vision import Fish_Vision
@@ -16,14 +17,12 @@ from vision_config import MARKERS
 # -------------------------------
 CAMERA_INDEX = 0
 USE_CAMERA = False
-IMG_NAME =  "photo1.jpg" # "pool_test.jpg"
-
-if not USE_CAMERA:
-    ground_truth = {
-        0: (0.37, 0.80),
-        2: (1.35, 0.70)
-    }
+IMG_NAME =  "pool_fish2.jpg"
+IMG_NAME = "pool_test.jpg"
+MAX_ATTEMPTS = 5
 # -------------------------------  0.37 0.80 ;1.35 0.70;  
+
+vision = Fish_Vision(camera_index=0)
 
 # --- Load test image or webcam ---
 if not USE_CAMERA:
@@ -33,6 +32,19 @@ if not USE_CAMERA:
         print(f"❌ Could not load image: {img_path}")
         exit()
     print(f"📷 Loaded image: {IMG_NAME}")
+
+    marker_test = False
+    if IMG_NAME == "pool_test.jpg":
+        marker_test = True
+
+        vision.known_markers = [4, 3, 1]
+
+        TARGET_MARKERS = [2, 0]
+        GROUND_THRUTH = {
+            0: (0.37, 0.80),
+            2: (1.35, 0.70)
+        }
+    
 else:
     print("📹 Using webcam...")
     cap = open_camera(CAMERA_INDEX)
@@ -43,30 +55,33 @@ else:
     if not ret:
         print("❌ Failed to read from webcam")
         exit()
-
-fv = Fish_Vision(camera_index=0)
-
+    
 # --- Calibration ---
 print("\n--- Calibration ---")
-MAX_ATTEMPTS = 5
-for attempt in range(1, MAX_ATTEMPTS + 1):
-    if USE_CAMERA:
-        ret, img = cap.read()  # grab a new frame from the camera
+
+if USE_CAMERA:
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        ret, img = cap.read()
         if not ret:
             print(f"⚠️ Attempt {attempt}: Failed to grab frame from camera.")
             continue
 
-    ok = fv.calibrate(img, show_output=True)
-    print(ok)
-    if ok:
-        print(f"✅ Calibration succeeded on attempt {attempt}.")
-        break
-    else:
-        print(f"⚠️ Attempt {attempt}: Calibration failed, retrying...")
+        ok = vision.calibrate(img, show_output=True)
+        
+        if ok:
+            print(f"✅ Calibration succeeded on attempt {attempt}.")
+            break
+        else:
+            print(f"⚠️ Attempt {attempt}: Calibration failed, retrying...")
+        time.sleep(0.5)
+else:
+    ok = vision.calibrate(img, show_output=True)
 
 if not ok:
-    print("❌ Calibration failed after maximum attempts.")
-    exit()
+    print("❌ Calibration failed.")
+    calibration_path = os.path.join(parent_dir, "media", "calibration", "calibration_fallback.jpg")
+    vision.calibrate(cv2.imread(calibration_path))
+    print("Used Fallback calibration image.")
 
 print("✅ Calibration successful!")
 
@@ -84,26 +99,29 @@ if ids is not None:
 
     for i, marker_id in enumerate(ids):
         # Only use markers that are in ground truth (target IDs)
-        if not USE_CAMERA:
-            if marker_id not in ground_truth:
+        if not USE_CAMERA and IMG_NAME == "pool_test.jpg":
+            if marker_id not in GROUND_THRUTH:
                 continue
 
             center = corners[i][0].mean(axis=0)
             u, v = center
 
-            Xw_est, Yw_est = fv.project_pixel_to_world(u, v)
-            Xw_gt, Yw_gt = ground_truth[marker_id]
+            Xw_est, Yw_est = vision.project_pixel_to_world(u, v)
+            Xw_gt, Yw_gt = GROUND_THRUTH[marker_id]
+
+            # --- Error ---
+            dx = Xw_est - Xw_gt
+            dy = Yw_est - Yw_gt
+            err = np.sqrt(dx**2 + dy**2)
 
             print(
-                f"Marker {marker_id} "
-                f"pixel=({u:.1f}, {v:.1f}) → "
-                f"est=({Xw_est:.4f}, {Yw_est:.4f}) | "
-                f"GT=({Xw_gt:.2f}, {Yw_gt:.2f})"
+                f"Marker {marker_id} → "
+                f"EST=({Xw_est:.4f}, {Yw_est:.4f}) | "
+                f"GT=({Xw_gt:.2f}, {Yw_gt:.2f}) | "
+                f"ERR={err:.4f} m"
             )
 else:
     print("⚠ No markers detected.")
-
-
 
 # --- Show results ---
 

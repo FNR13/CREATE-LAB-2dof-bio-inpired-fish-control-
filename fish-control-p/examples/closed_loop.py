@@ -15,7 +15,9 @@ from support_scripts_py.fish_control_comms import Fish_Control_Comms
 from support_scripts_py.kinematics import inverse_tail, dynamixel_angle_to_position, dynamixel_position_to_angle, fin_to_servo
 from support_scripts_py.logger import DataLogger, plot_log
 
-from vision.vision import Fish_Vision 
+from vision.vision import Fish_Vision
+from vision.vision_helpers import draw_fish_state
+from vision.vision_config import DRAWING
 
 from fish_controller.simple_controller import SimpleController
 
@@ -42,7 +44,7 @@ REF_SURGE = 1
 REF_YAW = 0
 
 # --- General Parameters ---
-MODE = "closed_loop" # "closed_loop"
+MODE = "closed_loop"
 
 # For MODE == "test"
 PHI_TAIL = 0    # degrees
@@ -146,15 +148,23 @@ try:
         elif MODE == "closed_loop":
             
             if USE_VISION:
-                valid, x, y, yaw, surge, yaw_rate = vision.get_fish_state(use_yolo=False,get_output=True)
-
+                valid, state = vision.get_fish_state(use_yolo=True)
+                
+                if not valid:
+                    surge = 0
+                    yaw = 0
+                else:
+                    yaw = state.yaw
+                    surge = state.surge
+                            
+                img_disp = draw_fish_state(vision.img, valid, state)
+                cv2.imshow("Closed-loop Vision", img_disp)
+                key = cv2.waitKey(1) & 0xFF
+                if key == 27:  # ESC key
+                    raise KeyboardInterrupt
             else:
                 yaw = 0
                 surge = 0
-
-            if not valid:
-                surge = 0
-                yaw = 0
 
             amplitude, bias = controller.update(
                 surge_ref=REF_SURGE,

@@ -3,7 +3,7 @@ import cv2
 # -------------------------------
 # Parameters
 # -------------------------------
-MAX_TEST_CAMERAS = 5   
+MAX_TEST_CAMERAS = 5
 # -------------------------------
 
 # --- Test camera indices for availability ---

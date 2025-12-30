@@ -10,10 +10,10 @@ from ultralytics import YOLO
 # -------------------------------
 CAMERA_INDEX = 0
 USE_CAMERA = False
-VIDEO_NAME = "pool_test2.mp4"
 USE_VIDEO = True
+VIDEO_NAME = "pool_test2.mp4"
 IMG_NAME = "fish.jpg"
-MODEL_NAME = "yolo11l.pt" # 
+MODEL_NAME = "yolo11l.pt"
 # -------------------------------
 
 model = YOLO(os.path.join(script_dir, "YOLO_models", MODEL_NAME))
@@ -29,13 +29,15 @@ if USE_CAMERA:
     )
 
     print("📹 Starting webcam detection...")
-    print("Press 'q' to quit")
+    print("Press 'Esc' to quit")
 
     for r in results:
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            key = cv2.waitKey(1) & 0xFF
+            if key == 27:  # ESC
+                break
 
     print("👋 Webcam detection stopped")
+
 elif USE_VIDEO:
     video_path = os.path.join(script_dir, "..", "media",  VIDEO_NAME)
     results = model.predict(
@@ -46,10 +48,11 @@ elif USE_VIDEO:
     )
 
     print(f"🎥 Starting video detection on {video_path}...")
-    print("Press 'q' to quit")
+    print("Press 'Esc' to quit")
 
     for r in results:
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        key = cv2.waitKey(1) & 0xFF
+        if key == 27:  # ESC
             break
 
     print("👋 Video detection stopped")

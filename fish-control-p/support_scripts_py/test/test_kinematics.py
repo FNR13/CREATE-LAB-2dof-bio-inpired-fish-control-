@@ -1,4 +1,3 @@
-# Imports
 import os
 import sys
 
@@ -10,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from kinematics import fin_to_servo, inverse_tail, tail_f
 
-print("=== Kinematics Test ===\n")
 
 # --- Test 1: Fin to Servo Mapping ---
 test_phis = [-60, -45, -30, -15, 0, 15, 30, 45, 60]
@@ -29,7 +27,7 @@ for phi in test_tails:
 print()
 
 # --- Generate plot for fin_to_servo ---
-phi_range = np.linspace(-90, 90, 200)  # adjust range as needed
+phi_range = np.linspace(-90, 90, 200) 
 theta_range = fin_to_servo(phi_range)
 
 plt.figure()

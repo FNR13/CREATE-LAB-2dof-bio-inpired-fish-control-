@@ -36,9 +36,10 @@ x1, y1 = 181, 53
 x2, y2 = 1099, 659
 img_crop = img[y1:y2, x1:x2].copy()
 
-img_gray = cv2.cvtColor(img_crop, cv2.COLOR_BGR2GRAY)
+gray = cv2.cvtColor(img_crop, cv2.COLOR_BGR2GRAY)
 
-blur = cv2.GaussianBlur(img_gray, GAUSSIAN_BLUR_SIZE, 0)
+# --- Gaussian blur ---
+blur = cv2.GaussianBlur(gray, GAUSSIAN_BLUR_SIZE, 0)
 
 if SHOW_BLUR:
     cv2.imshow('Blur image', blur)
@@ -59,7 +60,7 @@ if SHOW_THRESHOLDS:
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-# --- Morphologic ---
+# --- Morphology ---
 kernel = cv2.getStructuringElement(MORPH_KERNEL, MORPH_SIZE)
 morph = cv2.morphologyEx(thresh, cv2.MORPH_DILATE, kernel, iterations=MORPH_NUM_ITER)
 
@@ -135,9 +136,8 @@ print("Fish widths at sampled positions (pixels):", ["{:.2f}".format(w) for w in
 
 print(f"Fish centroid (u, v): ({u:.2f}, {v:.2f})")
 
-# Orientation angle (radians ➜ degrees)
 angle = np.arctan2(principal_vec[1], principal_vec[0])
-angle_deg = angle * 180.0 / np.pi
+angle_deg = (-1*(angle * 180.0 / np.pi))%360
 print("Fish orientation (degrees):", angle_deg)
 
 # --- Draw centroid ---

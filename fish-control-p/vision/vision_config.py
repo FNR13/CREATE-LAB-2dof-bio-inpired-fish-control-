@@ -2,15 +2,12 @@ import os
 import cv2
 import numpy as np
 
-# Get supp path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SUPPORT_DIR = os.path.join(SCRIPT_DIR, "vision_supp")
-
 
 CALIBRATION = {
     "path": os.path.join(SUPPORT_DIR, "camera calibration data", "camera_calib_1_5.npz")
 }
-
 
 POOL_WIDTH_M = 2.75
 POOL_HEIGHT_M = 1.75
@@ -30,17 +27,9 @@ MARKERS = {
 }
 
 
-YOLO_CFG = {
-    "model_name": "yolo11s.pt",
-    "model_path": os.path.join(SUPPORT_DIR, "YOLO_MODELS", "yolo11s.pt"),
-    "confidence": 0.25,
-    "target"    : "airplane" 
-}
-
-
 FISH_DETECTION = {
     "Filtering": {
-        "gaussian_blur_size": (5, 5),
+        "gaussian_blur_size": (7, 7),
     },
 
     "threshold": {
@@ -48,8 +37,8 @@ FISH_DETECTION = {
         "binary_min": 125,
         "binary_max": 255,
 
-        "adaptive_block": 251,
-        "adaptive_C": 20,
+        "adaptive_block": 121,
+        "adaptive_C": 15,
 
     },
 
@@ -60,10 +49,19 @@ FISH_DETECTION = {
     },
 
     "contours": {
-        "min_area": 500,
-        "max_area": 50000
+        "min_area": 1500,
+        "max_area": 5000
     }
 }
+
+
+YOLO_CFG = {
+    "model_name": "yolo11s.pt",
+    "model_path": os.path.join(SUPPORT_DIR, "YOLO_MODELS", "yolo11s.pt"),
+    "confidence": 0.25,
+    "target"    : "airplane" 
+}
+
 
 DRAWING = {
         "axis_length_pixels": 50,

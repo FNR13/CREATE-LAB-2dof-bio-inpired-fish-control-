@@ -4,7 +4,7 @@ import numpy as np
 import math
 
 try:
-    from .vision_helpers import open_camera, getCenters, drawAxes
+    from .vision_helpers import open_camera, getCenters, drawAxes, FishState
 
     from .vision_config import (
         CALIBRATION,
@@ -15,7 +15,7 @@ try:
         DRAWING,
     )
 except: 
-    from vision_helpers import open_camera, getCenters, drawAxes
+    from vision_helpers import open_camera, getCenters, drawAxes, FishState
 
     from vision_config import (
         CALIBRATION,
@@ -29,7 +29,6 @@ except:
 class Fish_Vision:
     def __init__(self, camera_index, delta_t=0.1):
         
-        # Vision algorithm
         calib_data = np.load(CALIBRATION["path"])
         self.camera_matrix = calib_data["camera_matrix"]
         self.dist_coeffs = calib_data["dist_coeffs"]
@@ -59,6 +58,7 @@ class Fish_Vision:
         self.cap = open_camera(camera_index)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.img = None
 
         # State
         self.delta_t = delta_t
@@ -75,14 +75,12 @@ class Fish_Vision:
                 print("[VISION - ERROR] Failed to grab frame from camera")
                 return False
         
-        imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        self.img = img.copy()
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         
         # Detect markers
-        corners, ids, _ = cv2.aruco.detectMarkers(
-            imgGray,
-            self.aruco_dict,
-            parameters=self.aruco_params
-        )
+        corners, ids, _ = cv2.aruco.detectMarkers(gray, self.aruco_dict, parameters=self.aruco_params)
 
         if ids is None:
             print("[VISION - ERROR] Markers not detected")
@@ -98,7 +96,7 @@ class Fish_Vision:
         )
 
         if len(known_centers) < 3:
-            print("[VISION - ERROR]All calibration markers were not detected")
+            print("[VISION - ERROR] All calibration markers were not detected")
             return False
     
         retval, rvecs, tvecs = cv2.solveP3P(
@@ -110,7 +108,7 @@ class Fish_Vision:
         )
 
         if retval == 0:
-            print("[VISION - ERROR]No valid P3P solution")
+            print("[VISION - ERROR] No valid P3P solution")
             return False
 
         self.rvec = rvecs[0]
@@ -124,7 +122,7 @@ class Fish_Vision:
 
         if show_output:
                 img_copy = img.copy()
-                # Draw axis
+                
                 axis_length = int(DRAWING["axis_length_meters"])
                 
                 axis = np.float32([[axis_length, 0, 0], [0, axis_length, 0], [0, 0, 0]])
@@ -137,11 +135,11 @@ class Fish_Vision:
                     center_x = int(c[:, 0].mean())
                     center_y = int(c[:, 1].mean())
                     center = (center_x, center_y)
-
                     cv2.polylines(img_copy, [c.astype(int)], True, (0, 255, 0), 3)
                     cv2.circle(img_copy, center, 5, (0, 0, 255), -1)
                     cv2.putText(img_copy, f"{marker_id}", (center_x + 10, center_y),
                                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                
                 cv2.imshow('Calibration', img_copy)
                 cv2.waitKey(0)
                     
@@ -173,7 +171,7 @@ class Fish_Vision:
         """Projects camera pixel to z=0 plane in world coordinates."""
 
         if not self.calibrated:
-            print("[VISION - ERROR]Please calibrate first")
+            print("[VISION - ERROR] Please calibrate first")
             return (0, 0)
     
         # Project a ray from the camera pixel to the z=0 plane
@@ -189,7 +187,7 @@ class Fish_Vision:
 
         return float(Pw[0]), float(Pw[1])
 
-    def detect_fish(self, img, show_output=False):
+    def detect_fish(self, img, show_output=False, stream=False):
         """
         Detects the fish using global thresholding + contour filtering + PCA.
             """
@@ -222,9 +220,9 @@ class Fish_Vision:
         cfg_m = FISH_DETECTION["morphology"]
         cfg_c = FISH_DETECTION["contours"]
 
-        img_gray = cv2.cvtColor(img_analysis, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(img_analysis, cv2.COLOR_BGR2GRAY)
 
-        blur = cv2.GaussianBlur(img_gray, cfg_f["gaussian_blur_size"], 0)
+        blur = cv2.GaussianBlur(gray, cfg_f["gaussian_blur_size"], 0)
 
         if cfg_t["method"] == "binary":
             _, thresh = cv2.threshold(
@@ -252,7 +250,6 @@ class Fish_Vision:
 
         fish_contours = []
 
-        # Filter low size contours
         for cnt in contours:
             area = cv2.contourArea(cnt)
             if cfg_c["min_area"] < area < cfg_c["max_area"]:
@@ -308,11 +305,11 @@ class Fish_Vision:
             v += y1
 
         angle = np.arctan2(principal_vec[1], principal_vec[0])
+        angle = (-1*angle)%(2*np.pi)
 
-        if show_output:
+        if show_output or stream:
             img_copy = img.copy()
             cv2.circle(img_copy, (int(u), int(v)), 6, (0, 0, 255), -1)
-
             axis_length = DRAWING["axis_length_pixels"]
             x2 = int(u + axis_length * principal_vec[0])
             y2 = int(v + axis_length * principal_vec[1])
@@ -327,11 +324,15 @@ class Fish_Vision:
             cv2.drawContours(img_copy, fish_contours_full, -1, (0,255,0), 2)
 
             cv2.imshow('Contours', img_copy)
-            cv2.waitKey(0)
-
+            
+            if stream:
+                cv2.waitKey(1)
+            else:
+                cv2.waitKey(0)
+                
         return True, int(u), int(v), angle
     
-    def detect_fish_yolo(self, img, show_output=False):
+    def detect_fish_yolo(self, img, show_output=False, stream=False):
         """
         Detects the fish using YOLO to get a bounding box, then applies the
         existing contour + PCA method.
@@ -350,9 +351,7 @@ class Fish_Vision:
 
         if len(filtered_dets) == 0:
             return found, None, None, None
-
-        found = True
-
+        
         # Pick highest confidence detection
         confs = filtered_dets.conf.cpu().numpy()
         best_idx = np.argmax(confs)
@@ -364,7 +363,7 @@ class Fish_Vision:
 
         crop = img[y1:y2, x1:x2]
 
-        found, u_local, v_local, angle = self.detect_fish(crop, show_output=False)
+        found, u_local, v_local, angle = self.detect_fish(crop, show_output=show_output, stream=stream)
 
         if not found:
             return found, None, None, None
@@ -373,7 +372,7 @@ class Fish_Vision:
         u_full = int(x1 + u_local)
         v_full = int(y1 + v_local)
 
-        if show_output:
+        if show_output or stream:
             img_copy = img.copy()
             # Draw YOLO box
             cv2.rectangle(img_copy, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -383,52 +382,58 @@ class Fish_Vision:
 
             # Draw orientation axis
             axis_length = DRAWING["axis_length_pixels"]
-            x2_axis = int(u_full - axis_length * np.cos(angle))
-            y2_axis = int(v_full - axis_length * np.sin(angle))
+            angle_disp = (2 * np.pi - angle) % (2 * np.pi) # Pass from [0 2pi] to [-pi pi]
+            x2_axis = int(u_full + axis_length * np.cos(angle_disp))
+            y2_axis = int(v_full + axis_length * np.sin(angle_disp))
             cv2.line(img_copy, (u_full, v_full), (x2_axis, y2_axis), (255, 0, 0), 3)
 
             cv2.imshow("YOLO + PCA Fish Detection", img_copy)
-            cv2.waitKey(0)
+            
+            if stream:
+                cv2.waitKey(1)
+            else:
+                cv2.waitKey(0)
 
         return found, u_full, v_full, angle
 
-    def get_fish_state(self, img = False, use_yolo=False, get_output=False):
+    def get_fish_state(self, img=False, use_yolo=False):
 
         if img is False:
             ret, img = self.cap.read()
             if not ret:
                 print("[VISION - ERROR] Failed to grab frame from camera")
-                return False, None, None, None, None, None
-        
-        if not use_yolo:
-            found, u, v, angle = self.detect_fish(img)
-        else: 
+                return False, FishState(None, None, None, None, None, None, None, None)
+
+        self.img = img.copy()
+
+        if use_yolo:
             found, u, v, angle = self.detect_fish_yolo(img)
+        else:
+            found, u, v, angle = self.detect_fish(img)
 
         if not found:
-            print("[VISION - ERROR] Fish not detected.")
-            return found, None, None, None, None, None
-        
-        yaw = angle
+            return False, FishState(None, None, None, None, None, None, None, None)
+
         x, y = self.project_pixel_to_world(u, v)
+        yaw = angle
 
         if self.last_x is None:
-            # Initialization
-            self.last_x = x
-            self.last_y = y
-            self.last_yaw = yaw
-            return found, x, y, yaw, 0, 0
+            self.last_x, self.last_y, self.last_yaw = x, y, yaw
+            return found, FishState(u, v, x, y, yaw, 0.0, 0.0, 0.0)
 
-        distance = math.sqrt((x - self.last_x)**2 + (y - self.last_y)**2)
-        surge = distance/self.delta_t
-        yaw_rate = (yaw - self.last_yaw)/self.delta_t
+        dx = x - self.last_x
+        dy = y - self.last_y
 
-        # Update last known state
-        self.last_x = x
-        self.last_y = y
-        self.last_yaw = yaw
+        vx = dx / self.delta_t
+        vy = dy / self.delta_t
 
-        return found, x, y, yaw, surge, yaw_rate
+        surge = math.cos(yaw) * vx + math.sin(yaw) * vy
+        sway  = -math.sin(yaw) * vx + math.cos(yaw) * vy
+        yaw_rate = (yaw - self.last_yaw) / self.delta_t
+
+        self.last_x, self.last_y, self.last_yaw = x, y, yaw
+
+        return found, FishState(u, v, x, y, yaw, surge, sway, yaw_rate)
 
 
 

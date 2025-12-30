@@ -12,7 +12,7 @@ from vision_helpers import open_camera
 # Parameters
 # -------------------------------
 CAMERA_INDEX = 0
-USE_CAMERA = True
+USE_CAMERA = False
 IMG_NAME = "pool_test.jpg"
 
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_36h11)
@@ -31,6 +31,8 @@ else:
     cap = open_camera(CAMERA_INDEX)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+print("Press 'Esc' to quit")
 
 # --- Detection loop ---
 while True:
@@ -53,18 +55,15 @@ while True:
         # Draw each detected marker
         for i, marker_id in enumerate(ids.flatten()):
             c = corners[i][0]
-
             center_x = int(c[:, 0].mean())
             center_y = int(c[:, 1].mean())
             center = (center_x, center_y)
-
-            if not USE_CAMERA:
-                print(f"Marker ID {marker_id}: center = {center}")
-
             cv2.polylines(img, [c.astype(int)], True, (0, 255, 0), 3)
             cv2.circle(img, center, 5, (0, 0, 255), -1)
             cv2.putText(img, f"{marker_id}", (center_x + 10, center_y),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+            if not USE_CAMERA:
+                print(f"Marker ID {marker_id}: center = {center}")
 
     cv2.imshow("Detected markers", img)
 
@@ -72,10 +71,11 @@ while True:
         cv2.waitKey(0)
         break
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    key = cv2.waitKey(1) & 0xFF
+    if key == 27:  # ESC
         break
 
-# --- Cleanup ---
+
 if USE_CAMERA:
     cap.release()
 cv2.destroyAllWindows()

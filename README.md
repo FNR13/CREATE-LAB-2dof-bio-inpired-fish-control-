@@ -39,6 +39,9 @@ Upload the following files to the Arduino:
 
 ### Python Control
 
+**Repository structure**
+
+```
 GitRepo/
 ├── environment.yaml           # Python environment file with dependencies
 ├── flag_arduino/
@@ -47,9 +50,9 @@ GitRepo/
 │   └── pyCommsLib.h
 ├── python/                    # Python source code
 │   ├── examples/              # Scripts for open-loop and closed-loop tests
-│   ├── fish_controller/    
+│   ├── fish_controller/
 │   ├── support_scripts_py/    # Motor command and utility scripts
-│   └── vision/          
+│   └── vision/
 │        ├── media/
 │        ├── test/
 │        ├── vision_supp/      # Debug and testing utilities
@@ -60,11 +63,12 @@ GitRepo/
    ├── Gabriel_thesis.pdf
    ├── Ricardo_Project
    └── UserManual/             # Instructions for fish assembly and disassembly
+```
 
 
 ## Installation
 
-1. Create a conda environment with th e provided `.yml`:
+1. Create a conda environment with the provided `.yml`:
 ```sh
 conda env create --name envname --file=environment.yaml
 conda activate envname

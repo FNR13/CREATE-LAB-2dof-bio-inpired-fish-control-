@@ -12,31 +12,43 @@ import time
 from vision import Fish_Vision  
 from vision_helpers import draw_fish_state
 from vision_config import DRAWING
+
 # -------------------------------
 # Parameters
 # -------------------------------
-VIDEO_NAME = "pool_test2.mp4"  # Video file name
-PAUSE = True
+VIDEO_NAME = "pool_test2.mp4"
+OUTPUT_VIDEO = "pool_test2_output.mp4"
+PAUSE = False
 STREAM = False
+FPS = 20
 # -------------------------------
 
 # --- Initialize Vision ---
-FPS = 20
-vision = Fish_Vision(camera_index=0, delta_t=1/FPS) # video fps is 20
+vision = Fish_Vision(camera_index=0, delta_t=1/FPS)
 
 calibration_path = os.path.join(parent_dir, "media", "calibration", "calibration_fallback.jpg")
 vision.calibrate(cv2.imread(calibration_path))
 
-# Open video
-video_path = os.path.join(parent_dir, "media", VIDEO_NAME)  # adjust path if needed
-
+# Open input video
+video_path = os.path.join(parent_dir, "media", VIDEO_NAME)
 cap = cv2.VideoCapture(video_path)
+
 if not cap.isOpened():
     print(f"❌ Could not open video: {video_path}")
     exit()
+
 print(f"🎥 Playing video: {VIDEO_NAME}")
 
-# Play video frame by frame
+# --- Initialize Video Writer ---
+width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+output_path = os.path.join(parent_dir, "media", OUTPUT_VIDEO)
+out = cv2.VideoWriter(output_path, fourcc, FPS, (width, height))
+
+# --- Process video ---
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -44,18 +56,27 @@ while True:
         break
     
     valid, u1, v1, ang1 = vision.detect_fish(frame, show_output=PAUSE, stream=STREAM)
-    valid, state  = vision.get_fish_state(img=frame, use_yolo=False)
+    valid, state = vision.get_fish_state(img=frame, use_yolo=False)
 
     img_disp = frame.copy()
+    img_disp = draw_fish_state(
+        img_disp, valid, state,
+        axis_length=DRAWING['axis_length_pixels']
+    )
 
-    img_disp = draw_fish_state(img_disp, valid, state, axis_length=DRAWING['axis_length_pixels'])
-
-    # Show the frame
+    # Show frame
     cv2.imshow("Video Playback", img_disp)
+
+    # ✅ Write frame to output video
+    out.write(img_disp)
     
     key = cv2.waitKey(int(1000/FPS)) & 0xFF
     if key == 27:  # ESC
         break
 
+# --- Cleanup ---
 cap.release()
+out.release()
 cv2.destroyAllWindows()
+
+print(f"💾 Output video saved to: {output_path}")
